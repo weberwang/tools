@@ -1,0 +1,9 @@
+# 依赖和编译产物。
+/node_modules/
+/dist/
+
+# 压缩结果、原图备份和临时文件仅保存在本地。
+/compressed/
+/results/
+/.tmp/
+*.log

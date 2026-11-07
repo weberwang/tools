@@ -1,0 +1,27 @@
+{
+  "name": "local-image-compressor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "完全离线的自适应批量图片压缩工具",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.check.json",
+    "test": "tsx --test tests/*.test.ts",
+    "compress": "tsx src/cli.ts",
+    "lint": "eslint src tests"
+  },
+  "dependencies": {
+    "sharp": "^0.35.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "eslint": "^10.10.0",
+    "tsx": "^4.20.0",
+    "typescript": "~6.0.0",
+    "typescript-eslint": "^8.70.0"
+  }
+}
