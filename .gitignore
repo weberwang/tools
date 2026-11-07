@@ -1,0 +1,38 @@
+# 通用依赖、缓存、日志与临时文件。
+node_modules/
+.cache/
+.tmp/
+coverage/
+*.log
+*.tsbuildinfo
+*.tmp
+*.swp
+
+# 本地环境变量；示例配置保留在版本控制中。
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+
+# 操作系统生成的文件。
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# 根目录中的本机审计、清理和进程快照不属于项目源码。
+/c-drive-audit.json
+/C盘*.json
+/C盘空间检查报告.md
+/Codex*归档清单-*.json
+/duplicate-tool-check*.json
+/node-*-state.json
+/首批清理结果.json
+
+# 本地页面、打包副本与归档文件不纳入版本控制。
+/pelican-cycle/
+/pelican-package/
+/pelican-ride.tar.gz
+
+# 此目录已有独立 Git 仓库，避免在父仓库中误作为嵌入仓库提交。
+/pelican-ride/
