@@ -19,6 +19,23 @@ function fixture(width = 128, height = 96, transparent = false): Buffer {
   return data;
 }
 
+/** 固定少量主色与细小噪声，可选连续透明度以覆盖调色板的 Alpha 量化。 */
+function paletteFixture(transparent = false): Buffer {
+  const pixels = Buffer.alloc(128 * 128 * 4);
+  let seed = 42;
+  for (let offset = 0; offset < pixels.length; offset += 4) {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    const color = (seed >>> 24) % 8;
+    for (let channel = 0; channel < 3; channel++) {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      pixels[offset + channel] = 32 + ((color >> channel) & 1) * 160 + (seed >>> 24) % 5;
+    }
+    if (transparent) seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    pixels[offset + 3] = transparent ? seed >>> 24 : 255;
+  }
+  return pixels;
+}
+
 /** 将输出与原文件按相同显示方向及色彩空间解码，独立复核误差。 */
 async function verifyResult(original: Buffer, output: Buffer): Promise<void> {
   const reference = await sharp(original).autoOrient().toColourspace('srgb')
@@ -46,25 +63,48 @@ test('透明 PNG 明显缩小，透明边缘和原图字节均受保护', async 
 });
 
 test('颜色接近但分布复杂的 PNG 实际选择调色板量化', async () => {
-  const pixels = Buffer.alloc(128 * 128 * 3);
-  let seed = 42;
-  for (let offset = 0; offset < pixels.length; offset += 3) {
-    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
-    const color = (seed >>> 24) % 8;
-    for (let channel = 0; channel < 3; channel++) {
-      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
-      pixels[offset + channel] = 32 + ((color >> channel) & 1) * 160 + (seed >>> 24) % 5;
-    }
-  }
-  const original = await sharp(pixels, {
-    raw: { width: 128, height: 128, channels: 3 },
+  const original = await sharp(paletteFixture(), {
+    raw: { width: 128, height: 128, channels: 4 },
   }).png({ compressionLevel: 9 }).toBuffer();
   const result = await compressImage(original);
   assert.equal(result.status, 'compressed');
-  assert.match(result.strategy, /色量化/);
+  assert.match(result.strategy, /量化/);
   assert.equal((await sharp(result.data).metadata()).isPalette, true);
   assert.ok(result.outputBytes < original.length * 0.8);
   await verifyResult(original, result.data);
+});
+
+test('透明调色板按合成误差验收，不因 Alpha 极值误差回退', async () => {
+  const original = await sharp(paletteFixture(true), {
+    raw: { width: 128, height: 128, channels: 4 },
+  }).png({ compressionLevel: 0 }).toBuffer();
+  const snapshot = Buffer.from(original);
+  const result = await compressImage(original);
+  assert.equal(result.status, 'compressed');
+  assert.equal((await sharp(result.data).metadata()).isPalette, true);
+  assert.equal((await sharp(result.data).metadata()).hasAlpha, true);
+  assert.ok(result.score.maxAlphaError > 6);
+  assert.ok(result.outputBytes < original.length * 0.5);
+  assert.deepEqual(original, snapshot);
+  await verifyResult(original, result.data);
+});
+
+test('高彩噪声 PNG 无法通过量化质量门槛时保留原始字节', async () => {
+  const pixels = Buffer.alloc(128 * 128 * 4);
+  let seed = 42;
+  for (let offset = 0; offset < pixels.length; offset += 4) {
+    for (let channel = 0; channel < 3; channel++) {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      pixels[offset + channel] = seed >>> 24;
+    }
+    pixels[offset + 3] = 255;
+  }
+  const original = await sharp(pixels, {
+    raw: { width: 128, height: 128, channels: 4 },
+  }).png({ compressionLevel: 0 }).toBuffer();
+  const result = await compressImage(original);
+  assert.equal(result.status, 'kept');
+  assert.deepEqual(result.data, original);
 });
 
 test('JPEG 自动选参、校正方向并清除 EXIF/GPS', async () => {

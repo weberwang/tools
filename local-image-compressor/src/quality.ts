@@ -1,10 +1,10 @@
 import type { Preset, QualityScore } from './types.js';
 
-/** 每档同时约束整体、局部和透明度误差，防止小面积文字被平均值掩盖。 */
-export const QUALITY_LIMITS: Record<Preset, QualityScore> = {
-  gentle: { rmse: 2, worstBlockRmse: 7, maxAlphaError: 3 },
-  balanced: { rmse: 4, worstBlockRmse: 12, maxAlphaError: 6 },
-  small: { rmse: 6, worstBlockRmse: 18, maxAlphaError: 12 },
+/** 每档同时约束整体与局部合成误差，防止小面积文字被平均值掩盖。 */
+export const QUALITY_LIMITS: Record<Preset, Pick<QualityScore, 'rmse' | 'worstBlockRmse'>> = {
+  gentle: { rmse: 2, worstBlockRmse: 7 },
+  balanced: { rmse: 4, worstBlockRmse: 12 },
+  small: { rmse: 6, worstBlockRmse: 18 },
 };
 
 /** 在原分辨率上比较两份 RGBA 数据，并分别检验黑白背景上的显示误差。 */
@@ -60,10 +60,10 @@ export function measureQuality(
   };
 }
 
-/** 三个指标必须同时通过；这些工程阈值不代表肉眼无损或 Tinify 的内部指标。 */
+/** 两项合成误差必须同时通过；这些工程阈值不代表肉眼无损或 Tinify 的内部指标。 */
 export function isAcceptable(score: QualityScore, preset: Preset): boolean {
   const limit = QUALITY_LIMITS[preset];
+  // 黑白背景合成误差已经评估透明边缘，Alpha 单点最大误差仅保留为诊断信息。
   return score.rmse <= limit.rmse
-    && score.worstBlockRmse <= limit.worstBlockRmse
-    && score.maxAlphaError <= limit.maxAlphaError;
+    && score.worstBlockRmse <= limit.worstBlockRmse;
 }

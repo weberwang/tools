@@ -8,6 +8,7 @@ export type ImageFormat = 'png' | 'jpeg' | 'webp';
 export interface QualityScore {
   rmse: number;
   worstBlockRmse: number;
+  /** 最大 Alpha 误差仅用于报告，质量判定以黑白背景合成误差为准。 */
   maxAlphaError: number;
 }
 

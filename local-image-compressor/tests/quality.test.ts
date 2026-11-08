@@ -28,6 +28,29 @@ test('黑色透明边缘的变化能在白背景上被发现', () => {
   assert.equal(isAcceptable(score, 'small'), false);
 });
 
+test('稀少的 Alpha 极值只作诊断，合成误差达标即可通过', () => {
+  const original = solid(64, 64, 0);
+  const modified = Buffer.from(original);
+  modified[3] = 187;
+  const score = measureQuality(original, modified, 64, 64);
+  assert.equal(score.maxAlphaError, 68);
+  assert.ok(score.rmse < 4);
+  assert.ok(score.worstBlockRmse < 12);
+  assert.equal(isAcceptable(score, 'balanced'), true);
+});
+
+test('局部透明度损伤仍会被合成后的区块误差拒绝', () => {
+  const original = solid(256, 256, 0);
+  const modified = Buffer.from(original);
+  for (let y = 0; y < 16; y++) {
+    for (let x = 0; x < 16; x++) modified[(y * 256 + x) * 4 + 3] = 215;
+  }
+  const score = measureQuality(original, modified, 256, 256);
+  assert.ok(score.rmse < 4);
+  assert.equal(score.worstBlockRmse, 40);
+  assert.equal(isAcceptable(score, 'balanced'), false);
+});
+
 test('很小的局部缺陷不能被低整体误差掩盖', () => {
   const original = solid(256, 256, 0);
   const modified = Buffer.from(original);

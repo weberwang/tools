@@ -25,21 +25,18 @@ function isAnimatedPng(input: Buffer): boolean {
   return false;
 }
 
-/** 枚举有限候选，避免假设编码质量与视觉误差严格单调而遗漏合格结果。 */
+/** PNG 使用已验证的单一方案，其他格式枚举有限候选并择优。 */
 function candidatesFor(format: ImageFormat): Candidate[] {
   if (format === 'png') {
     return [
       {
-        name: 'PNG 真彩色重新编码',
-        encode: (image) => image.png({ compressionLevel: 9, adaptiveFiltering: true }),
-      },
-      ...[256, 128, 64, 32].map((colours): Candidate => ({
-        name: `PNG ${colours} 色量化`,
+        // 使用同图对比中验证过的量化与滤波设置，减少调色板文件体积。
+        name: 'PNG 256 色感知量化',
         encode: (image) => image.png({
-          palette: true, colours, effort: 7, dither: 1,
-          compressionLevel: 9, adaptiveFiltering: true,
+          palette: true, colours: 256, effort: 10, dither: 0,
+          compressionLevel: 9, adaptiveFiltering: false,
         }),
-      })),
+      },
     ];
   }
   if (format === 'jpeg') {
