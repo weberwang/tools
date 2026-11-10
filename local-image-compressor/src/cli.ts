@@ -3,10 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 
 import { runBatch, type BatchItem, type BatchResult } from './batch.js';
-import type { Preset } from './types.js';
-
 /** 命令行默认值；与批处理 API 保持一致。 */
-const DEFAULT_PRESET: Preset = 'balanced';
 const DEFAULT_MAX_PIXELS = 16_000_000;
 
 /** 可注入的终端输出，便于测试命令行错误和摘要。 */
@@ -20,7 +17,6 @@ export interface CliOptions {
   inputPaths: string[];
   outputDir: string;
   recursive: boolean;
-  preset: Preset;
   reportPath?: string;
   maxPixels: number;
 }
@@ -34,14 +30,14 @@ export const HELP_TEXT = `用法：npm run compress -- [选项] <文件或目录
 选项：
   -o, --output <目录>       输出目录（默认：当前目录/compressed）
   -r, --recursive           递归处理目录中的图片
-      --preset <档位>       gentle、balanced 或 small（默认：balanced）
       --max-pixels <数量>   单张图片的像素上限（默认：16000000）
       --report <文件>       写出 JSON 报告；目标文件必须不存在
   -h, --help                显示帮助
 
 支持扩展名：png、jpg、jpeg、webp。目录输入默认只处理当前层；使用 --recursive 才会进入子目录。
-PNG 自动比较调色板、RGB 量化与无损优化，按黑白背景合成误差验收；有真实缩小就保留。
-已达压缩极限的图片原样保留；JSON 报告的 attempts 记录各候选体积、质量和拒绝原因。
+PNG 只使用固定 256 色感知量化方案，无需选择算法或质量档位。
+质量门槛固定为整体 RMSE ≤ 4、最坏 16×16 区块 RMSE ≤ 12；有真实缩小才输出压缩结果。
+体积或质量不达标时保留原图；JSON 报告的 attempts 记录编码体积、质量和拒绝原因。
 单个目录的图片保持相对目录结构；多个目录输入时，会在相对路径前加各目录的 basename，仍冲突时该项会报错。
 输出不会覆盖已有文件或源图；输出目录是输入目录的子目录时会排除整个输出子树。
 `;
@@ -82,7 +78,6 @@ export function parseCliArgs(argv: string[], cwd = process.cwd()): CliOptions | 
     options: {
       output: { type: 'string', short: 'o' },
       recursive: { type: 'boolean', short: 'r' },
-      preset: { type: 'string' },
       help: { type: 'boolean', short: 'h' },
       report: { type: 'string' },
       'max-pixels': { type: 'string' },
@@ -98,10 +93,6 @@ export function parseCliArgs(argv: string[], cwd = process.cwd()): CliOptions | 
 
   const output = optionString(parsed.values.output, '--output') ?? resolve(cwd, 'compressed');
   const report = optionString(parsed.values.report, '--report');
-  const presetValue = optionString(parsed.values.preset, '--preset') ?? DEFAULT_PRESET;
-  if (!['gentle', 'balanced', 'small'].includes(presetValue)) {
-    throw new Error('--preset 只能是 gentle、balanced 或 small');
-  }
   const maxPixelsValue = optionString(parsed.values['max-pixels'], '--max-pixels');
   const maxPixels = maxPixelsValue === undefined
     ? DEFAULT_MAX_PIXELS
@@ -111,7 +102,6 @@ export function parseCliArgs(argv: string[], cwd = process.cwd()): CliOptions | 
     inputPaths: parsed.positionals,
     outputDir: output,
     recursive: parsed.values.recursive === true,
-    preset: presetValue as Preset,
     reportPath: report,
     maxPixels,
   };

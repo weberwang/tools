@@ -1,6 +1,4 @@
 import sharp from 'sharp';
-import { createPngCandidates } from './png-candidates.js';
-import { optimizePngLossless } from './png-lossless.js';
 import { isAcceptable, measureQuality } from './quality.js';
 import type {
   CompressionAttempt, CompressionOptions, CompressionResult, ImageFormat, QualityScore,
@@ -12,13 +10,11 @@ interface Candidate {
   encode: () => Promise<Buffer>;
 }
 
-/** 所有有损候选共享同一份参考像素，原始字节只供无损容器优化使用。 */
+/** 所有编码候选共享同一份参考像素，避免串联有损处理。 */
 interface EncodingContext {
-  input: Buffer;
   reference: Buffer;
   width: number;
   height: number;
-  hasAlpha: boolean;
 }
 
 /** 读取 PNG 块而非搜索字符串，避免把图像数据中的 acTL 误判为动画。 */
@@ -36,15 +32,21 @@ function isAnimatedPng(input: Buffer): boolean {
   return false;
 }
 
-/** 按格式生成独立候选，覆盖调色板、真彩色量化和原始 PNG 的无损整理。 */
+/** PNG 使用唯一的 256 色量化方案；JPEG 和 WebP 按各自格式生成候选。 */
 function candidatesFor(format: ImageFormat, context: EncodingContext): Candidate[] {
-  const { input, reference, width, height, hasAlpha } = context;
+  const { reference, width, height } = context;
   /** 重建编码管线，避免某个候选的变更影响其他候选。 */
   const image = () => sharp(reference, { raw: { width, height, channels: 4 } }).withIccProfile('srgb');
   if (format === 'png') {
     return [
-      { name: 'PNG IDAT 无损优化', encode: async () => optimizePngLossless(input) },
-      ...createPngCandidates(reference, width, height, hasAlpha),
+      {
+        // 固定使用同图实测接近 TinyPNG 的调色板参数，不再尝试其他 PNG 路径。
+        name: 'PNG 256 色感知量化',
+        encode: () => image().png({
+          palette: true, colours: 256, effort: 10, dither: 0,
+          compressionLevel: 9, adaptiveFiltering: false,
+        }).toBuffer(),
+      },
     ];
   }
   if (format === 'jpeg') {
@@ -73,11 +75,7 @@ export async function compressImage(
   input: Buffer,
   options: CompressionOptions = {},
 ): Promise<CompressionResult> {
-  const preset = options.preset ?? 'balanced';
   const maxPixels = options.maxPixels ?? 16_000_000;
-  if (!['gentle', 'balanced', 'small'].includes(preset)) {
-    throw new Error('未知质量档位');
-  }
   if (!Number.isSafeInteger(maxPixels) || maxPixels <= 0) {
     throw new Error('像素上限必须是正整数');
   }
@@ -105,25 +103,24 @@ export async function compressImage(
   let strategy = '';
   let bestScore: QualityScore = { rmse: 0, worstBlockRmse: 0, maxAlphaError: 0 };
   const attempts: CompressionAttempt[] = [];
-  for (const candidate of candidatesFor(format, { input, reference,
-    width: info.width, height: info.height, hasAlpha: metadata.hasAlpha ?? false })) {
+  for (const candidate of candidatesFor(format, { reference,
+    width: info.width, height: info.height })) {
     const data = await candidate.encode();
-    // 不再因为收益不足 1% 丢弃真实优化；已达极限时也不能输出更大的文件。
+    // 只有严格小于原文件的候选才进行质量评估，避免输出体积更大的结果。
     if (data.length >= input.length) {
       attempts.push({ strategy: candidate.name, outputBytes: data.length, status: 'rejected-size',
         rejectionReason: '候选没有比原文件更小，未继续质量评估' });
       continue;
     }
     const decoded = await sharp(data, settings)
-      // IDAT 整理保留原 EXIF 方向，其解码方向必须与参考像素一致。
       .autoOrient().toColourspace('srgb').ensureAlpha().raw().toBuffer({ resolveWithObject: true });
     if (decoded.info.width !== info.width || decoded.info.height !== info.height) {
       throw new Error('编码后的图片尺寸发生意外变化');
     }
     const score = measureQuality(reference, decoded.data, info.width, info.height);
-    if (!isAcceptable(score, preset)) {
+    if (!isAcceptable(score)) {
       attempts.push({ strategy: candidate.name, outputBytes: data.length, score, status: 'rejected-quality',
-        rejectionReason: '整体或局部合成误差超过当前档位上限' });
+        rejectionReason: '整体或局部合成误差超过质量上限' });
       continue;
     }
     attempts.push({ strategy: candidate.name, outputBytes: data.length, score, status: 'accepted' });

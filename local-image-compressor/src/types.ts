@@ -1,6 +1,3 @@
-/** 支持的三档质量策略；档位越保守，允许的像素误差越小。 */
-export type Preset = 'gentle' | 'balanced' | 'small';
-
 /** 首版仅处理静态、8 位的三种常用图片格式。 */
 export type ImageFormat = 'png' | 'jpeg' | 'webp';
 
@@ -35,6 +32,5 @@ export interface CompressionResult {
 
 /** 对单张图片进行压缩时的质量与资源限制。 */
 export interface CompressionOptions {
-  preset?: Preset;
   maxPixels?: number;
 }

@@ -25,7 +25,7 @@ test('黑色透明边缘的变化能在白背景上被发现', () => {
   const score = measureQuality(solid(2, 2, 0, 0), solid(2, 2, 0, 255), 2, 2);
   assert.equal(score.rmse, 255);
   assert.equal(score.maxAlphaError, 255);
-  assert.equal(isAcceptable(score, 'small'), false);
+  assert.equal(isAcceptable(score), false);
 });
 
 test('稀少的 Alpha 极值只作诊断，合成误差达标即可通过', () => {
@@ -36,7 +36,7 @@ test('稀少的 Alpha 极值只作诊断，合成误差达标即可通过', () =
   assert.equal(score.maxAlphaError, 68);
   assert.ok(score.rmse < 4);
   assert.ok(score.worstBlockRmse < 12);
-  assert.equal(isAcceptable(score, 'balanced'), true);
+  assert.equal(isAcceptable(score), true);
 });
 
 test('局部透明度损伤仍会被合成后的区块误差拒绝', () => {
@@ -48,7 +48,7 @@ test('局部透明度损伤仍会被合成后的区块误差拒绝', () => {
   const score = measureQuality(original, modified, 256, 256);
   assert.ok(score.rmse < 4);
   assert.equal(score.worstBlockRmse, 40);
-  assert.equal(isAcceptable(score, 'balanced'), false);
+  assert.equal(isAcceptable(score), false);
 });
 
 test('很小的局部缺陷不能被低整体误差掩盖', () => {
@@ -63,7 +63,7 @@ test('很小的局部缺陷不能被低整体误差掩盖', () => {
   const score = measureQuality(original, modified, 256, 256);
   assert.ok(score.rmse < 4);
   assert.equal(score.worstBlockRmse, 40);
-  assert.equal(isAcceptable(score, 'balanced'), false);
+  assert.equal(isAcceptable(score), false);
 });
 
 test('错误像素长度被拒绝', () => {

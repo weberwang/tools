@@ -58,12 +58,11 @@ test('非法 max-pixels 返回参数错误退出码', async () => {
 });
 
 test('解析默认值与多目录前缀相关参数', () => {
-  const parsed = parseCliArgs(['-r', '--preset', 'small', '--max-pixels', '12345', 'first', 'second']);
+  const parsed = parseCliArgs(['-r', '--max-pixels', '12345', 'first', 'second']);
   assert.notEqual(parsed, 'help');
   if (parsed === 'help') return;
   assert.deepEqual(parsed.inputPaths, ['first', 'second']);
   assert.equal(parsed.recursive, true);
-  assert.equal(parsed.preset, 'small');
   assert.equal(parsed.maxPixels, 12345);
 });
 
@@ -77,7 +76,6 @@ test('CLI 成功处理目录、写出报告并打印中文总计', async () => {
 
     const exitCode = await main([
       '--recursive',
-      '--preset', 'gentle',
       '--max-pixels', '100000',
       '--output', output,
       '--report', report,
@@ -88,10 +86,18 @@ test('CLI 成功处理目录、写出报告并打印中文总计', async () => {
     assert.match(captured.stdout.join(''), /完成：成功 1/);
     assert.equal((await stat(join(output, 'nested', 'picture.png'))).isFile(), true);
     const reportData = JSON.parse(await readFile(report, 'utf8')) as {
-      options: { preset: string; maxPixels: number; recursive: boolean };
+      options: { maxPixels: number; recursive: boolean };
     };
-    assert.equal(reportData.options.preset, 'gentle');
+    assert.equal('preset' in reportData.options, false);
     assert.equal(reportData.options.maxPixels, 100000);
     assert.equal(reportData.options.recursive, true);
   });
+});
+
+test('不再接受已移除的质量档位参数', async () => {
+  const captured = captureIO();
+  const exitCode = await main(['--preset', 'gentle', 'input.png'], captured.io);
+  assert.equal(exitCode, 2);
+  assert.equal(captured.stdout.length, 0);
+  assert.doesNotMatch(HELP_TEXT, /--preset/);
 });

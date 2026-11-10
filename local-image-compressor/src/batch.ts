@@ -5,7 +5,7 @@ import type { FileHandle } from 'node:fs/promises';
 import { basename, dirname, extname, join, parse, relative, resolve, sep } from 'node:path';
 
 import { compressImage } from './engine.js';
-import type { CompressionAttempt, CompressionResult, ImageFormat, Preset, QualityScore } from './types.js';
+import type { CompressionAttempt, CompressionResult, ImageFormat, QualityScore } from './types.js';
 
 /** 默认的输出目录名称。 */
 export const DEFAULT_OUTPUT_DIRECTORY = 'compressed';
@@ -51,7 +51,6 @@ export interface BatchReport {
     inputPaths: string[];
     outputDir: string;
     recursive: boolean;
-    preset: Preset;
     maxPixels: number;
   };
   summary: BatchSummary;
@@ -63,7 +62,6 @@ export interface BatchOptions {
   inputPaths: string[];
   outputDir?: string;
   recursive?: boolean;
-  preset?: Preset;
   maxPixels?: number;
   reportPath?: string;
   cwd?: string;
@@ -517,7 +515,6 @@ function validateCompressionResult(
 async function processFiles(
   files: InputFile[],
   outputDir: string,
-  preset: Preset,
   maxPixels: number,
   discoveryItems: BatchItem[],
 ): Promise<BatchItem[]> {
@@ -575,7 +572,7 @@ async function processFiles(
 
     let result: CompressionResult;
     try {
-      result = await compressImage(input, { preset, maxPixels });
+      result = await compressImage(input, { maxPixels });
       validateCompressionResult(file.path, expectedFormat, result);
       await writeNoClobber(outputPath, result.data);
     } catch (error) {
@@ -614,11 +611,7 @@ export async function runBatch(options: BatchOptions): Promise<BatchResult> {
 
   const outputDir = absolutePath(options.outputDir ?? DEFAULT_OUTPUT_DIRECTORY, cwd);
   const recursive = options.recursive ?? false;
-  const preset = options.preset ?? 'balanced';
   const maxPixels = options.maxPixels ?? DEFAULT_MAX_PIXELS;
-  if (!['gentle', 'balanced', 'small'].includes(preset)) {
-    throw new BatchInputError('preset 只能是 gentle、balanced 或 small');
-  }
   if (!Number.isSafeInteger(maxPixels) || maxPixels <= 0) {
     throw new BatchInputError('maxPixels 必须是正整数');
   }
@@ -649,7 +642,6 @@ export async function runBatch(options: BatchOptions): Promise<BatchResult> {
   const files = await processFiles(
     discovery.files,
     outputDir,
-    preset,
     maxPixels,
     discovery.items,
   );
@@ -661,7 +653,6 @@ export async function runBatch(options: BatchOptions): Promise<BatchResult> {
       inputPaths,
       outputDir,
       recursive,
-      preset,
       maxPixels,
     },
     summary,

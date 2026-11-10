@@ -2,7 +2,7 @@
   "name": "local-image-compressor",
   "version": "0.1.0",
   "private": true,
-  "description": "完全离线的自适应批量图片压缩工具",
+  "description": "完全离线的批量图片压缩工具，PNG 采用固定 256 色感知量化",
   "type": "module",
   "engines": {
     "node": ">=22.13"

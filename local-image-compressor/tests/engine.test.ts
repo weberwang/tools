@@ -36,7 +36,7 @@ function paletteFixture(transparent = false): Buffer {
   return pixels;
 }
 
-/** 构造合法 PNG 块，复用于 IDAT 分块和 APNG 信号的边界用例。 */
+/** 构造合法 PNG 块，复用于 EXIF 方向和 APNG 信号的边界用例。 */
 function pngChunk(kind: string, payload: Buffer): Buffer {
   const chunk = Buffer.alloc(payload.length + 12);
   chunk.writeUInt32BE(payload.length, 0);
@@ -51,21 +51,6 @@ function pngChunk(kind: string, payload: Buffer): Buffer {
   return chunk;
 }
 
-/** 只改变压缩流的分块方式，制造小于 1% 的可消除容器开销。 */
-function splitIdat(input: Buffer): Buffer {
-  for (let offset = 8; offset + 12 <= input.length;) {
-    const length = input.readUInt32BE(offset);
-    if (input.toString('ascii', offset + 4, offset + 8) === 'IDAT' && length > 1) {
-      const payload = input.subarray(offset + 8, offset + 8 + length);
-      const middle = Math.floor(length / 2);
-      return Buffer.concat([input.subarray(0, offset), pngChunk('IDAT', payload.subarray(0, middle)),
-        pngChunk('IDAT', payload.subarray(middle)), input.subarray(offset + length + 12)]);
-    }
-    offset += length + 12;
-  }
-  throw new Error('测试 PNG 缺少可分割的 IDAT');
-}
-
 /** 将输出与原文件按相同显示方向及色彩空间解码，独立复核误差。 */
 async function verifyResult(original: Buffer, output: Buffer): Promise<void> {
   const reference = await sharp(original).autoOrient().toColourspace('srgb')
@@ -76,7 +61,7 @@ async function verifyResult(original: Buffer, output: Buffer): Promise<void> {
   assert.equal(result.info.height, reference.info.height);
   const score = measureQuality(reference.data, result.data,
     reference.info.width, reference.info.height);
-  assert.ok(isAcceptable(score, 'balanced'), JSON.stringify(score));
+  assert.ok(isAcceptable(score), JSON.stringify(score));
 }
 
 test('透明 PNG 明显缩小，透明边缘和原图字节均受保护', async () => {
@@ -100,6 +85,8 @@ test('颜色接近但分布复杂的 PNG 实际选择调色板量化', async () 
   assert.equal(result.status, 'compressed');
   assert.match(result.strategy, /量化/);
   assert.equal((await sharp(result.data).metadata()).isPalette, true);
+  assert.equal(result.attempts.length, 1);
+  assert.equal(result.attempts[0]?.status, 'accepted');
   assert.ok(result.outputBytes < original.length * 0.8);
   await verifyResult(original, result.data);
 });
@@ -119,7 +106,7 @@ test('透明调色板按合成误差验收，不因 Alpha 极值误差回退', a
   await verifyResult(original, result.data);
 });
 
-test('高彩噪声 PNG 使用 RGB 候选压缩并记录被拒的调色板误差', async () => {
+test('高彩噪声 PNG 未达到质量门槛时保留原图并记录被拒原因', async () => {
   const pixels = Buffer.alloc(128 * 128 * 4);
   let seed = 42;
   for (let offset = 0; offset < pixels.length; offset += 4) {
@@ -133,36 +120,19 @@ test('高彩噪声 PNG 使用 RGB 候选压缩并记录被拒的调色板误差'
     raw: { width: 128, height: 128, channels: 4 },
   }).png({ compressionLevel: 0 }).toBuffer();
   const result = await compressImage(original);
-  assert.equal(result.status, 'compressed');
-  assert.match(result.strategy, /RGB/);
-  assert.equal(result.score.maxAlphaError, 0);
-  assert.ok(result.attempts.some(attempt => attempt.status === 'rejected-quality' && attempt.score));
-  assert.ok(result.attempts.some(attempt => attempt.status === 'accepted' && /RGB/.test(attempt.strategy)));
-  assert.ok(result.outputBytes < original.length);
-  await verifyResult(original, result.data);
+  assert.equal(result.status, 'kept');
+  assert.deepEqual(result.data, original);
+  assert.equal(result.attempts.length, 1);
+  assert.equal(result.attempts[0]?.status, 'rejected-quality');
+  assert.ok(result.attempts[0]?.score);
+  assert.ok(result.attempts[0]?.rejectionReason);
 });
 
-test('不足百分之一的无损容器优化仍作为合格候选参与择优', async () => {
-  const input = await sharp(fixture(128, 128, true), {
-    raw: { width: 128, height: 128, channels: 4 },
+test('带 EXIF 方向的 PNG 调色板输出按显示方向校正', async () => {
+  const png = await sharp(fixture(128, 96, true), {
+    raw: { width: 128, height: 96, channels: 4 },
   }).png({ compressionLevel: 0 }).toBuffer();
-  const original = splitIdat(input);
-  const result = await compressImage(original);
-  const lossless = result.attempts.find(attempt => /IDAT/.test(attempt.strategy));
-  assert.ok(lossless);
-  assert.equal(lossless.status, 'accepted');
-  assert.ok(lossless.outputBytes < original.length);
-  assert.ok(lossless.outputBytes > original.length * 0.99);
-  assert.equal(lossless.score?.rmse, 0);
-  assert.equal(lossless.score?.maxAlphaError, 0);
-  assert.ok(result.outputBytes <= lossless.outputBytes);
-});
-
-test('带 EXIF 方向的 PNG 选中 IDAT 优化时按显示方向评估像素', async () => {
-  const png = await sharp(fixture(2, 3), {
-    raw: { width: 2, height: 3, channels: 4 },
-  }).png().toBuffer();
-  // 最小 TIFF 只记录旋转方向、不嵌入 ICC，让保留元数据的无损候选确实更小。
+  // 最小 TIFF 记录旋转方向，验证输出与原图的显示方向而非存储方向一致。
   const tiff = Buffer.alloc(26);
   tiff.write('II', 0, 'ascii');
   tiff.writeUInt16LE(42, 2);
@@ -172,14 +142,17 @@ test('带 EXIF 方向的 PNG 选中 IDAT 优化时按显示方向评估像素', 
   tiff.writeUInt16LE(3, 12);
   tiff.writeUInt32LE(1, 14);
   tiff.writeUInt16LE(6, 18);
-  const oriented = Buffer.concat([png.subarray(0, 33), pngChunk('eXIf', tiff), png.subarray(33)]);
-  const original = splitIdat(oriented);
+  const original = Buffer.concat([png.subarray(0, 33), pngChunk('eXIf', tiff), png.subarray(33)]);
   assert.equal((await sharp(original).metadata()).orientation, 6);
   const result = await compressImage(original);
   assert.equal(result.status, 'compressed');
-  assert.match(result.strategy, /IDAT/);
-  assert.equal((await sharp(result.data).metadata()).orientation, 6);
-  assert.equal(result.score.rmse, 0);
+  assert.match(result.strategy, /量化/);
+  assert.equal(result.attempts.length, 1);
+  const metadata = await sharp(result.data).metadata();
+  assert.equal(metadata.orientation, undefined);
+  assert.equal(metadata.width, 96);
+  assert.equal(metadata.height, 128);
+  assert.equal(metadata.isPalette, true);
   await verifyResult(original, result.data);
 });
 
