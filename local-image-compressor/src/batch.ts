@@ -5,7 +5,7 @@ import type { FileHandle } from 'node:fs/promises';
 import { basename, dirname, extname, join, parse, relative, resolve, sep } from 'node:path';
 
 import { compressImage } from './engine.js';
-import type { CompressionResult, ImageFormat, Preset, QualityScore } from './types.js';
+import type { CompressionAttempt, CompressionResult, ImageFormat, Preset, QualityScore } from './types.js';
 
 /** 默认的输出目录名称。 */
 export const DEFAULT_OUTPUT_DIRECTORY = 'compressed';
@@ -28,6 +28,7 @@ export interface BatchItem {
   outputBytes?: number;
   strategy?: string;
   score?: QualityScore;
+  attempts?: CompressionAttempt[];
   error?: string;
 }
 
@@ -592,6 +593,7 @@ async function processFiles(
       outputBytes: result.data.byteLength,
       strategy: result.strategy,
       score: result.score,
+      attempts: result.attempts,
     });
   }
 

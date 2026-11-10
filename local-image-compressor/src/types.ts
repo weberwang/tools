@@ -12,6 +12,15 @@ export interface QualityScore {
   maxAlphaError: number;
 }
 
+/** 单个编码候选的真实结果；体积无收益时不计算质量分数。 */
+export interface CompressionAttempt {
+  strategy: string;
+  outputBytes: number;
+  status: 'accepted' | 'rejected-size' | 'rejected-quality';
+  score?: QualityScore;
+  rejectionReason?: string;
+}
+
 /** 压缩引擎返回完整文件；保留原始字节时不会清除原元数据。 */
 export interface CompressionResult {
   data: Buffer;
@@ -21,6 +30,7 @@ export interface CompressionResult {
   inputBytes: number;
   outputBytes: number;
   score: QualityScore;
+  attempts: CompressionAttempt[];
 }
 
 /** 对单张图片进行压缩时的质量与资源限制。 */

@@ -144,13 +144,16 @@ test('JSON 报告记录成功与失败，并拒绝覆盖已有报告', async () 
     });
     const reportData = JSON.parse(await readFile(report, 'utf8')) as {
       version: number;
-      files: Array<{ status: string; inputPath: string; outputPath?: string }>;
+      files: Array<{ status: string; inputPath: string; outputPath?: string;
+        attempts?: Array<{ strategy: string; status: string; rejectionReason?: string }> }>;
     };
     assert.equal(result.reportError, undefined);
     assert.equal(reportData.version, 1);
     assert.equal(reportData.files.length, 1);
     assert.match(reportData.files[0]?.inputPath ?? '', /picture\.png$/);
     assert.match(reportData.files[0]?.outputPath ?? '', /picture\.png$/);
+    assert.ok(reportData.files[0]?.attempts?.length);
+    assert.ok(reportData.files[0]?.attempts?.every(attempt => attempt.strategy && attempt.status));
 
     await assert.rejects(
       runBatch({ inputPaths: [input], outputDir: join(directory, 'second'), reportPath: report }),
