@@ -1,11 +1,11 @@
 /** 首版仅处理静态、8 位的三种常用图片格式。 */
 export type ImageFormat = 'png' | 'jpeg' | 'webp';
 
-/** 全分辨率校验结果，误差单位为 0～255 通道值。 */
+/** 全分辨率误差诊断结果，单位为 0～255 通道值，不参与候选筛选。 */
 export interface QualityScore {
   rmse: number;
   worstBlockRmse: number;
-  /** 最大 Alpha 误差仅用于报告，质量判定以黑白背景合成误差为准。 */
+  /** 最大 Alpha 误差，仅用于报告。 */
   maxAlphaError: number;
 }
 
@@ -13,7 +13,7 @@ export interface QualityScore {
 export interface CompressionAttempt {
   strategy: string;
   outputBytes: number;
-  status: 'accepted' | 'rejected-size' | 'rejected-quality';
+  status: 'accepted' | 'rejected-size';
   score?: QualityScore;
   rejectionReason?: string;
 }
@@ -30,7 +30,7 @@ export interface CompressionResult {
   attempts: CompressionAttempt[];
 }
 
-/** 对单张图片进行压缩时的质量与资源限制。 */
+/** 对单张图片进行压缩时的资源限制。 */
 export interface CompressionOptions {
   maxPixels?: number;
 }

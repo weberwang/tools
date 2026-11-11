@@ -1,10 +1,10 @@
 import sharp from 'sharp';
-import { isAcceptable, measureQuality } from './quality.js';
+import { measureQuality } from './quality.js';
 import type {
   CompressionAttempt, CompressionOptions, CompressionResult, ImageFormat, QualityScore,
 } from './types.js';
 
-/** 每个候选由格式专用编码器产生，统一使用解码后的像素进行验收。 */
+/** 每个候选由格式专用编码器产生，并记录解码后的质量诊断。 */
 interface Candidate {
   name: string;
   encode: () => Promise<Buffer>;
@@ -70,7 +70,7 @@ function candidatesFor(format: ImageFormat, context: EncodingContext): Candidate
   ];
 }
 
-/** 同格式压缩静态图片，返回满足质量门槛且严格更小的最优结果。 */
+/** 同格式压缩静态图片，返回严格更小的候选中体积最小的结果。 */
 export async function compressImage(
   input: Buffer,
   options: CompressionOptions = {},
@@ -106,10 +106,10 @@ export async function compressImage(
   for (const candidate of candidatesFor(format, { reference,
     width: info.width, height: info.height })) {
     const data = await candidate.encode();
-    // 只有严格小于原文件的候选才进行质量评估，避免输出体积更大的结果。
+    // 严格小于原文件的候选才需要解码和记录误差，体积无收益时保留原图。
     if (data.length >= input.length) {
       attempts.push({ strategy: candidate.name, outputBytes: data.length, status: 'rejected-size',
-        rejectionReason: '候选没有比原文件更小，未继续质量评估' });
+        rejectionReason: '候选没有比原文件更小，未继续误差诊断' });
       continue;
     }
     const decoded = await sharp(data, settings)
@@ -118,11 +118,7 @@ export async function compressImage(
       throw new Error('编码后的图片尺寸发生意外变化');
     }
     const score = measureQuality(reference, decoded.data, info.width, info.height);
-    if (!isAcceptable(score)) {
-      attempts.push({ strategy: candidate.name, outputBytes: data.length, score, status: 'rejected-quality',
-        rejectionReason: '整体或局部合成误差超过质量上限' });
-      continue;
-    }
+    // 误差仅供诊断；候选选择只考虑体积，不因图像误差拒绝更小的结果。
     attempts.push({ strategy: candidate.name, outputBytes: data.length, score, status: 'accepted' });
     if (data.length < best.length) {
       best = data;
@@ -131,9 +127,7 @@ export async function compressImage(
     }
   }
   if (best === input) {
-    strategy = attempts.some(attempt => attempt.status === 'rejected-quality')
-      ? '保留原文件：更小候选均未通过质量门槛，详见 attempts'
-      : '保留原文件：所有候选均未缩小文件，详见 attempts';
+    strategy = '保留原文件：所有候选均未缩小文件，详见 attempts';
   }
   return {
     data: best, format, strategy,

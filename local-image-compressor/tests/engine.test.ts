@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import sharp from 'sharp';
 import { compressImage } from '../src/engine.js';
-import { isAcceptable, measureQuality } from '../src/quality.js';
+import { measureQuality } from '../src/quality.js';
+import type { CompressionResult, QualityScore } from '../src/types.js';
 
 /** 固定渐变和透明边缘，避免随机样本让测试结果漂移。 */
 function fixture(width = 128, height = 96, transparent = false): Buffer {
@@ -36,6 +37,20 @@ function paletteFixture(transparent = false): Buffer {
   return pixels;
 }
 
+/** 固定高彩噪声，让旧的误差门槛与当前按体积选取的行为产生可验证差异。 */
+function noiseFixture(): Buffer {
+  const pixels = Buffer.alloc(128 * 128 * 4);
+  let seed = 42;
+  for (let offset = 0; offset < pixels.length; offset += 4) {
+    for (let channel = 0; channel < 3; channel++) {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      pixels[offset + channel] = seed >>> 24;
+    }
+    pixels[offset + 3] = 255;
+  }
+  return pixels;
+}
+
 /** 构造合法 PNG 块，复用于 EXIF 方向和 APNG 信号的边界用例。 */
 function pngChunk(kind: string, payload: Buffer): Buffer {
   const chunk = Buffer.alloc(payload.length + 12);
@@ -52,7 +67,7 @@ function pngChunk(kind: string, payload: Buffer): Buffer {
 }
 
 /** 将输出与原文件按相同显示方向及色彩空间解码，独立复核误差。 */
-async function verifyResult(original: Buffer, output: Buffer): Promise<void> {
+async function verifyResult(original: Buffer, output: Buffer, expectedScore: QualityScore): Promise<void> {
   const reference = await sharp(original).autoOrient().toColourspace('srgb')
     .ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const result = await sharp(output).autoOrient().toColourspace('srgb')
@@ -61,7 +76,16 @@ async function verifyResult(original: Buffer, output: Buffer): Promise<void> {
   assert.equal(result.info.height, reference.info.height);
   const score = measureQuality(reference.data, result.data,
     reference.info.width, reference.info.height);
-  assert.ok(isAcceptable(score), JSON.stringify(score));
+  assert.deepEqual(score, expectedScore);
+}
+
+/** 使用真实候选尺寸与评分验证选择结果，而不预设哪个编码参数最小。 */
+function verifySmallestCandidate(result: CompressionResult): void {
+  const accepted = result.attempts.filter(attempt => attempt.status === 'accepted');
+  assert.ok(accepted.length > 0);
+  assert.equal(result.outputBytes, Math.min(...accepted.map(attempt => attempt.outputBytes)));
+  assert.ok(accepted.some(attempt => attempt.strategy === result.strategy &&
+    attempt.outputBytes === result.outputBytes && attempt.score?.rmse === result.score.rmse));
 }
 
 test('透明 PNG 明显缩小，透明边缘和原图字节均受保护', async () => {
@@ -74,7 +98,7 @@ test('透明 PNG 明显缩小，透明边缘和原图字节均受保护', async 
   assert.ok(result.outputBytes < result.inputBytes * 0.9);
   assert.equal((await sharp(result.data).metadata()).hasAlpha, true);
   assert.deepEqual(original, snapshot);
-  await verifyResult(original, result.data);
+  await verifyResult(original, result.data, result.score);
 });
 
 test('颜色接近但分布复杂的 PNG 实际选择调色板量化', async () => {
@@ -88,10 +112,10 @@ test('颜色接近但分布复杂的 PNG 实际选择调色板量化', async () 
   assert.equal(result.attempts.length, 1);
   assert.equal(result.attempts[0]?.status, 'accepted');
   assert.ok(result.outputBytes < original.length * 0.8);
-  await verifyResult(original, result.data);
+  await verifyResult(original, result.data, result.score);
 });
 
-test('透明调色板按合成误差验收，不因 Alpha 极值误差回退', async () => {
+test('透明调色板缩小后保留误差诊断，不因 Alpha 极值误差回退', async () => {
   const original = await sharp(paletteFixture(true), {
     raw: { width: 128, height: 128, channels: 4 },
   }).png({ compressionLevel: 0 }).toBuffer();
@@ -103,29 +127,22 @@ test('透明调色板按合成误差验收，不因 Alpha 极值误差回退', a
   assert.ok(result.score.maxAlphaError > 6);
   assert.ok(result.outputBytes < original.length * 0.5);
   assert.deepEqual(original, snapshot);
-  await verifyResult(original, result.data);
+  await verifyResult(original, result.data, result.score);
 });
 
-test('高彩噪声 PNG 未达到质量门槛时保留原图并记录被拒原因', async () => {
-  const pixels = Buffer.alloc(128 * 128 * 4);
-  let seed = 42;
-  for (let offset = 0; offset < pixels.length; offset += 4) {
-    for (let channel = 0; channel < 3; channel++) {
-      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
-      pixels[offset + channel] = seed >>> 24;
-    }
-    pixels[offset + 3] = 255;
-  }
-  const original = await sharp(pixels, {
+test('高彩噪声 PNG 超出原误差门槛但体积更小时仍采用，报告误差', async () => {
+  const original = await sharp(noiseFixture(), {
     raw: { width: 128, height: 128, channels: 4 },
   }).png({ compressionLevel: 0 }).toBuffer();
   const result = await compressImage(original);
-  assert.equal(result.status, 'kept');
-  assert.deepEqual(result.data, original);
+  assert.equal(result.status, 'compressed');
+  assert.ok(result.outputBytes < original.length);
   assert.equal(result.attempts.length, 1);
-  assert.equal(result.attempts[0]?.status, 'rejected-quality');
+  assert.equal(result.attempts[0]?.status, 'accepted');
   assert.ok(result.attempts[0]?.score);
-  assert.ok(result.attempts[0]?.rejectionReason);
+  assert.ok(result.score.rmse > 4 || result.score.worstBlockRmse > 12);
+  assert.deepEqual(result.attempts[0]?.score, result.score);
+  await verifyResult(original, result.data, result.score);
 });
 
 test('带 EXIF 方向的 PNG 调色板输出按显示方向校正', async () => {
@@ -153,7 +170,7 @@ test('带 EXIF 方向的 PNG 调色板输出按显示方向校正', async () => 
   assert.equal(metadata.width, 96);
   assert.equal(metadata.height, 128);
   assert.equal(metadata.isPalette, true);
-  await verifyResult(original, result.data);
+  await verifyResult(original, result.data, result.score);
 });
 
 test('JPEG 自动选参、校正方向并清除 EXIF/GPS', async () => {
@@ -172,7 +189,7 @@ test('JPEG 自动选参、校正方向并清除 EXIF/GPS', async () => {
   assert.equal(metadata.exif, undefined);
   assert.equal(metadata.orientation, undefined);
   assert.ok(metadata.icc);
-  await verifyResult(original, result.data);
+  await verifyResult(original, result.data, result.score);
 });
 
 test('WebP 保持格式且不会输出比原图更大的文件', async () => {
@@ -182,7 +199,22 @@ test('WebP 保持格式且不会输出比原图更大的文件', async () => {
   const result = await compressImage(original);
   assert.equal(result.format, 'webp');
   assert.ok(result.outputBytes <= result.inputBytes);
-  await verifyResult(original, result.data);
+  await verifyResult(original, result.data, result.score);
+});
+
+test('JPEG 和 WebP 按最小候选体积择优，超出原误差门槛也可采用', async () => {
+  const input = sharp(noiseFixture(), { raw: { width: 128, height: 128, channels: 4 } });
+  const originals = [
+    await input.clone().jpeg({ quality: 100, chromaSubsampling: '4:4:4' }).toBuffer(),
+    await input.clone().webp({ lossless: true }).toBuffer(),
+  ];
+  for (const original of originals) {
+    const result = await compressImage(original);
+    assert.equal(result.status, 'compressed');
+    verifySmallestCandidate(result);
+    assert.ok(result.score.rmse > 4 || result.score.worstBlockRmse > 12);
+    await verifyResult(original, result.data, result.score);
+  }
 });
 
 test('微小且已优化的图片保留原始字节', async () => {

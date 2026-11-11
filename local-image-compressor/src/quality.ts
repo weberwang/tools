@@ -1,11 +1,6 @@
 import type { QualityScore } from './types.js';
 
-/** 固定使用整体与局部合成误差门槛，避免档位差异改变 PNG 压缩方案。 */
-export const QUALITY_LIMITS: Readonly<Pick<QualityScore, 'rmse' | 'worstBlockRmse'>> = Object.freeze({
-  rmse: 4, worstBlockRmse: 12,
-});
-
-/** 在原分辨率上比较两份 RGBA 数据，并分别检验黑白背景上的显示误差。 */
+/** 在原分辨率上比较两份 RGBA 数据，仅记录黑白背景下的显示误差供诊断。 */
 export function measureQuality(
   reference: Buffer,
   candidate: Buffer,
@@ -58,9 +53,3 @@ export function measureQuality(
   };
 }
 
-/** 两项合成误差必须同时通过；这些工程阈值不代表肉眼无损或 Tinify 的内部指标。 */
-export function isAcceptable(score: QualityScore): boolean {
-  // 黑白背景合成误差已经评估透明边缘，Alpha 单点最大误差仅保留为诊断信息。
-  return score.rmse <= QUALITY_LIMITS.rmse
-    && score.worstBlockRmse <= QUALITY_LIMITS.worstBlockRmse;
-}

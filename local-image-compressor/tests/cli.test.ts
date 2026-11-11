@@ -122,9 +122,18 @@ test('原地 CLI 递归替换同名图片，并输出实际字节总计与明确
     const second = join(directory, 'nested', 'picture.png');
     const reportPath = join(directory, 'report.json');
     await mkdir(join(directory, 'nested'));
-    const original = await sharp({
-      create: { width: 64, height: 64, channels: 4, background: { r: 90, g: 140, b: 180, alpha: 1 } },
-    }).png({ compressionLevel: 0 }).toBuffer();
+    // 高彩噪声会超出旧误差门槛，用真实原地入口验证它仍按体积采用并准确统计。
+    const pixels = Buffer.alloc(64 * 64 * 4);
+    let seed = 42;
+    for (let offset = 0; offset < pixels.length; offset += 4) {
+      for (let channel = 0; channel < 3; channel++) {
+        seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+        pixels[offset + channel] = seed >>> 24;
+      }
+      pixels[offset + 3] = 255;
+    }
+    const original = await sharp(pixels, { raw: { width: 64, height: 64, channels: 4 } })
+      .png({ compressionLevel: 0 }).toBuffer();
     await writeFile(first, original);
     await writeFile(second, original);
     const meta = Buffer.from('{"uuid":"keep-this-uuid"}');
@@ -145,10 +154,14 @@ test('原地 CLI 递归替换同名图片，并输出实际字节总计与明确
     assert.ok(stdout.includes(`节省比例：${((1 - outputBytes / inputBytes) * 100).toFixed(2)}%`));
     const report = JSON.parse(await readFile(reportPath, 'utf8')) as {
       options: { inPlace: boolean }; summary: { inputBytes: number; outputBytes: number };
+      files: Array<{ status: string; score: { rmse: number; worstBlockRmse: number } }>;
     };
     assert.equal(report.options.inPlace, true);
     assert.equal(report.summary.inputBytes, inputBytes);
     assert.equal(report.summary.outputBytes, outputBytes);
+    assert.equal(report.files.length, 2);
+    assert.ok(report.files.every(file => file.status === 'compressed'
+      && (file.score.rmse > 4 || file.score.worstBlockRmse > 12)));
   });
 });
 
