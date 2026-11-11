@@ -5,6 +5,7 @@ import type { FileHandle } from 'node:fs/promises';
 import { basename, dirname, extname, join, parse, relative, resolve, sep } from 'node:path';
 
 import { compressImage } from './engine.js';
+import { assertNoSymlinkComponents, assertSourceUnchanged, currentFileSize, replaceInPlace } from './file-in-place.js';
 import type { CompressionAttempt, CompressionResult, ImageFormat, QualityScore } from './types.js';
 
 /** 默认的输出目录名称。 */
@@ -32,7 +33,7 @@ export interface BatchItem {
   error?: string;
 }
 
-/** 批处理总计，字节数只统计已经成功发布的图片。 */
+/** 批处理总计；原地模式另计失败源图的已知大小及无法确认大小的项数。 */
 export interface BatchSummary {
   total: number;
   compressed: number;
@@ -41,6 +42,9 @@ export interface BatchSummary {
   skipped: number;
   inputBytes: number;
   outputBytes: number;
+  /** 无法获知原始或当前大小的失败项数，仅用于原地模式。 */
+  unknownInputSize: number;
+  unknownOutputSize: number;
 }
 
 /** 批处理报告的稳定 JSON 结构。 */
@@ -49,7 +53,8 @@ export interface BatchReport {
   generatedAt: string;
   options: {
     inputPaths: string[];
-    outputDir: string;
+    outputDir?: string;
+    inPlace: boolean;
     recursive: boolean;
     maxPixels: number;
   };
@@ -61,6 +66,7 @@ export interface BatchReport {
 export interface BatchOptions {
   inputPaths: string[];
   outputDir?: string;
+  inPlace?: boolean;
   recursive?: boolean;
   maxPixels?: number;
   reportPath?: string;
@@ -177,28 +183,6 @@ function errorMessage(error: unknown): string {
   return String(error);
 }
 
-/** 检查已有路径组件，防止输出或输入通过软链接越出预期范围。 */
-async function assertNoSymlinkComponents(targetPath: string): Promise<void> {
-  const absolute = resolve(targetPath);
-  const root = parse(absolute).root;
-  const components = relative(root, absolute).split(sep).filter(Boolean);
-  let current = root;
-
-  for (const component of components) {
-    current = join(current, component);
-    let stats: Stats;
-    try {
-      stats = await lstat(current);
-    } catch (error) {
-      if (hasErrorCode(error, 'ENOENT')) break;
-      throw error;
-    }
-    if (stats.isSymbolicLink()) {
-      throw new BatchInputError(`路径包含软链接或目录 junction，已拒绝：${current}`);
-    }
-  }
-}
-
 /** 确认输出目录存在时确实是目录，并拒绝通过链接写入其他位置。 */
 async function validateOutputDirectory(outputDir: string): Promise<void> {
   await assertNoSymlinkComponents(outputDir);
@@ -248,7 +232,7 @@ function addDiscoveryFailure(
 /** 递归或非递归收集一个目录下的受支持图片。 */
 async function collectDirectory(
   root: string,
-  outputDir: string,
+  outputDir: string | undefined,
   recursive: boolean,
   files: InputFile[],
   seenFiles: Set<string>,
@@ -271,7 +255,7 @@ async function collectDirectory(
         const child = join(directory, entry.name);
 
         // 输出在输入目录内时必须在发现阶段排除，避免把本次产物再次当作源图。
-        if (isPathInside(child, outputDir, true)) {
+        if (outputDir !== undefined && isPathInside(child, outputDir, true)) {
           skipped += 1;
           continue;
         }
@@ -324,7 +308,7 @@ async function collectDirectory(
 /** 解析文件与目录输入，并确定每个文件在输出目录中的相对路径。 */
 async function discoverInputs(
   inputPaths: string[],
-  outputDir: string,
+  outputDir: string | undefined,
   recursive: boolean,
 ): Promise<DiscoveryResult> {
   const roots: InputRoot[] = [];
@@ -466,11 +450,13 @@ function createSummary(): BatchSummary {
     skipped: 0,
     inputBytes: 0,
     outputBytes: 0,
+    unknownInputSize: 0,
+    unknownOutputSize: 0,
   };
 }
 
-/** 根据每一项结果计算报告总计。 */
-function summarize(items: BatchItem[], skipped: number): BatchSummary {
+/** 根据每一项结果计算总计；原地失败项分别采用处理前及失败后的实际大小。 */
+function summarize(items: BatchItem[], skipped: number, inPlace: boolean): BatchSummary {
   const summary = createSummary();
   summary.skipped = skipped;
   for (const item of items) {
@@ -482,14 +468,26 @@ function summarize(items: BatchItem[], skipped: number): BatchSummary {
     if (item.status === 'compressed') summary.compressed += 1;
     if (item.status === 'kept') summary.kept += 1;
     if (item.status === 'failed') summary.failed += 1;
-    if (item.inputBytes !== undefined && item.status !== 'failed') {
+    if (inPlace && item.status === 'failed') {
+      if (item.inputBytes === undefined) summary.unknownInputSize += 1;
+      if (item.outputBytes === undefined) summary.unknownOutputSize += 1;
+    }
+    if (item.inputBytes !== undefined && (item.status !== 'failed' || inPlace)) {
       summary.inputBytes += item.inputBytes;
     }
-    if (item.outputBytes !== undefined && item.status !== 'failed') {
+    if (item.outputBytes !== undefined && (item.status !== 'failed' || inPlace)) {
       summary.outputBytes += item.outputBytes;
     }
   }
   return summary;
+}
+
+/** 失败后分别记录处理前的大小和当前文件的真实大小，避免并发修改造成失真。 */
+async function inPlaceFailure(path: string, error: unknown, inputBytes?: number): Promise<BatchItem> {
+  const outputBytes = await currentFileSize(path);
+  return { status: 'failed', inputPath: path, outputPath: path, error: errorMessage(error),
+    ...(inputBytes === undefined ? {} : { inputBytes }),
+    ...(outputBytes === undefined ? {} : { outputBytes }) };
 }
 
 /** 校验引擎结果，防止把错误格式写到原扩展名文件。 */
@@ -514,7 +512,7 @@ function validateCompressionResult(
 /** 按发现顺序逐张处理图片，失败项不会阻断后续图片。 */
 async function processFiles(
   files: InputFile[],
-  outputDir: string,
+  outputDir: string | undefined,
   maxPixels: number,
   discoveryItems: BatchItem[],
 ): Promise<BatchItem[]> {
@@ -523,18 +521,18 @@ async function processFiles(
   const publishedPaths = new Set<string>();
 
   for (const file of files) {
-    const outputPath = resolve(outputDir, file.relativePath);
+    const outputPath = outputDir === undefined ? file.path : resolve(outputDir, file.relativePath);
     const expectedFormat = formatForExtension(file.path);
     if (expectedFormat === undefined) {
       addDiscoveryFailure(items, file.path, '不支持的图片扩展名；支持 png、jpg、jpeg、webp', outputPath);
       continue;
     }
-    if (samePath(file.path, outputPath)) {
+    if (outputDir !== undefined && samePath(file.path, outputPath)) {
       addDiscoveryFailure(items, file.path, '输出路径与源文件相同，已拒绝覆盖', outputPath);
       continue;
     }
     const outputKey = pathKey(outputPath);
-    if (sourcePaths.has(outputKey)) {
+    if (outputDir !== undefined && sourcePaths.has(outputKey)) {
       addDiscoveryFailure(items, file.path, `输出路径会覆盖源文件，已拒绝：${outputPath}`, outputPath);
       continue;
     }
@@ -542,20 +540,24 @@ async function processFiles(
       addDiscoveryFailure(items, file.path, `输出路径与另一项冲突，已拒绝覆盖：${outputPath}`, outputPath);
       continue;
     }
-    try {
-      await lstat(outputPath);
-      addDiscoveryFailure(items, file.path, `输出文件已存在，为避免覆盖已跳过：${outputPath}`, outputPath);
-      continue;
-    } catch (error) {
-      if (!hasErrorCode(error, 'ENOENT')) {
-        addDiscoveryFailure(items, file.path, error, outputPath);
+    if (outputDir !== undefined) {
+      try {
+        await lstat(outputPath);
+        addDiscoveryFailure(items, file.path, `输出文件已存在，为避免覆盖已跳过：${outputPath}`, outputPath);
         continue;
+      } catch (error) {
+        if (!hasErrorCode(error, 'ENOENT')) {
+          addDiscoveryFailure(items, file.path, error, outputPath);
+          continue;
+        }
       }
     }
 
     let input: Buffer;
+    let stats: Stats | undefined;
     try {
-      const stats = await lstat(file.path);
+      await assertNoSymlinkComponents(file.path);
+      stats = await lstat(file.path);
       if (stats.isSymbolicLink() || !stats.isFile()) {
         throw new BatchInputError('源文件已变为软链接或不再是普通文件');
       }
@@ -566,7 +568,10 @@ async function processFiles(
       }
       input = await readFile(file.path);
     } catch (error) {
-      addDiscoveryFailure(items, file.path, error, outputPath);
+      if (outputDir === undefined) {
+        items.push(await inPlaceFailure(file.path, error,
+          stats?.isFile() && !stats.isSymbolicLink() ? stats.size : undefined));
+      } else addDiscoveryFailure(items, file.path, error, outputPath);
       continue;
     }
 
@@ -574,9 +579,16 @@ async function processFiles(
     try {
       result = await compressImage(input, { maxPixels });
       validateCompressionResult(file.path, expectedFormat, result);
-      await writeNoClobber(outputPath, result.data);
+      if (outputDir === undefined) {
+        // 保留原图时不触碰文件，以保留其字节和修改时间。
+        if (result.status === 'compressed') await replaceInPlace(file.path, input, result.data, stats);
+        else await assertSourceUnchanged(file.path, input, stats);
+      } else {
+        await writeNoClobber(outputPath, result.data);
+      }
     } catch (error) {
-      addDiscoveryFailure(items, file.path, error, outputPath);
+      if (outputDir === undefined) items.push(await inPlaceFailure(file.path, error, stats.size));
+      else addDiscoveryFailure(items, file.path, error, outputPath);
       continue;
     }
 
@@ -606,19 +618,22 @@ async function writeReport(reportPath: string, report: BatchReport): Promise<voi
 /** 批量压缩文件或目录，并在完成后可选写出 JSON 报告。 */
 export async function runBatch(options: BatchOptions): Promise<BatchResult> {
   const cwd = resolve(options.cwd ?? process.cwd());
-  const inputPaths = options.inputPaths.map((inputPath) => absolutePath(inputPath, cwd));
+  const inPlace = options.inPlace ?? false;
+  if (inPlace && options.outputDir !== undefined) throw new BatchInputError('原地替换不能指定输出目录');
+  const inputPaths = (inPlace && options.inputPaths.length === 0 ? [cwd] : options.inputPaths)
+    .map((inputPath) => absolutePath(inputPath, cwd));
   if (inputPaths.length === 0) throw new EmptyInputError();
 
-  const outputDir = absolutePath(options.outputDir ?? DEFAULT_OUTPUT_DIRECTORY, cwd);
-  const recursive = options.recursive ?? false;
+  const outputDir = inPlace ? undefined : absolutePath(options.outputDir ?? DEFAULT_OUTPUT_DIRECTORY, cwd);
+  const recursive = options.recursive ?? inPlace;
   const maxPixels = options.maxPixels ?? DEFAULT_MAX_PIXELS;
   if (!Number.isSafeInteger(maxPixels) || maxPixels <= 0) {
     throw new BatchInputError('maxPixels 必须是正整数');
   }
 
-  await validateOutputDirectory(outputDir);
+  if (outputDir !== undefined) await validateOutputDirectory(outputDir);
   const discovery = await discoverInputs(inputPaths, outputDir, recursive);
-  validateOutputRelation(outputDir, discovery.roots);
+  if (outputDir !== undefined) validateOutputRelation(outputDir, discovery.roots);
 
   if (discovery.files.length === 0 && discovery.items.length === 0) {
     throw new EmptyInputError();
@@ -626,7 +641,7 @@ export async function runBatch(options: BatchOptions): Promise<BatchResult> {
 
   const plannedOutputPaths = new Set<string>();
   for (const file of discovery.files) {
-    plannedOutputPaths.add(pathKey(resolve(outputDir, file.relativePath)));
+    plannedOutputPaths.add(pathKey(outputDir === undefined ? file.path : resolve(outputDir, file.relativePath)));
   }
   const reportPath = options.reportPath === undefined
     ? undefined
@@ -645,13 +660,14 @@ export async function runBatch(options: BatchOptions): Promise<BatchResult> {
     maxPixels,
     discovery.items,
   );
-  const summary = summarize(files, discovery.skipped);
+  const summary = summarize(files, discovery.skipped, inPlace);
   const report: BatchReport = {
     version: 1,
     generatedAt: new Date().toISOString(),
     options: {
       inputPaths,
-      outputDir,
+      ...(outputDir === undefined ? {} : { outputDir }),
+      inPlace,
       recursive,
       maxPixels,
     },

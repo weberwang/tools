@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, rm, stat } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -100,4 +100,81 @@ test('不再接受已移除的质量档位参数', async () => {
   assert.equal(exitCode, 2);
   assert.equal(captured.stdout.length, 0);
   assert.doesNotMatch(HELP_TEXT, /--preset/);
+});
+
+test('原地模式默认递归处理当前工作目录，并拒绝输出目录参数', async () => {
+  const parsed = parseCliArgs(['--in-place'], process.cwd());
+  assert.notEqual(parsed, 'help');
+  if (parsed === 'help') return;
+  assert.deepEqual(parsed.inputPaths, [process.cwd()]);
+  assert.equal(parsed.inPlace, true);
+  assert.equal(parsed.recursive, true);
+  assert.equal(parsed.outputDir, undefined);
+  const captured = captureIO();
+  assert.equal(await main(['--in-place', '--output', 'unused'], captured.io), 2);
+  assert.match(captured.stderr.join(''), /--in-place 不能与 --output 同时使用/);
+  assert.equal(captured.stdout.length, 0);
+});
+
+test('原地 CLI 递归替换同名图片，并输出实际字节总计与明确口径的压缩比', async () => {
+  await withTempDirectory(async (directory) => {
+    const first = join(directory, 'picture.png');
+    const second = join(directory, 'nested', 'picture.png');
+    const reportPath = join(directory, 'report.json');
+    await mkdir(join(directory, 'nested'));
+    const original = await sharp({
+      create: { width: 64, height: 64, channels: 4, background: { r: 90, g: 140, b: 180, alpha: 1 } },
+    }).png({ compressionLevel: 0 }).toBuffer();
+    await writeFile(first, original);
+    await writeFile(second, original);
+    const meta = Buffer.from('{"uuid":"keep-this-uuid"}');
+    await writeFile(`${first}.meta`, meta);
+    const captured = captureIO();
+
+    assert.equal(await main(['--in-place', '--report', reportPath, directory], captured.io), 0);
+    const outputBytes = (await stat(first)).size + (await stat(second)).size;
+    const inputBytes = original.length * 2;
+    assert.ok(outputBytes < inputBytes);
+    assert.deepEqual(await readFile(`${first}.meta`), meta);
+    const stdout = captured.stdout.join('');
+    assert.ok(stdout.includes(`原始总大小：`));
+    assert.ok(stdout.includes(`（${inputBytes} 字节）`));
+    assert.ok(stdout.includes(`压缩后总大小：`));
+    assert.ok(stdout.includes(`（${outputBytes} 字节）`));
+    assert.ok(stdout.includes(`压缩比（压缩后/原始）：${(outputBytes / inputBytes * 100).toFixed(2)}%`));
+    assert.ok(stdout.includes(`节省比例：${((1 - outputBytes / inputBytes) * 100).toFixed(2)}%`));
+    const report = JSON.parse(await readFile(reportPath, 'utf8')) as {
+      options: { inPlace: boolean }; summary: { inputBytes: number; outputBytes: number };
+    };
+    assert.equal(report.options.inPlace, true);
+    assert.equal(report.summary.inputBytes, inputBytes);
+    assert.equal(report.summary.outputBytes, outputBytes);
+  });
+});
+
+test('原地 CLI 损坏图片返回失败并保留原字节，统计失败项的原始大小', async () => {
+  await withTempDirectory(async (directory) => {
+    const broken = join(directory, 'broken.png');
+    const original = Buffer.from('invalid-png');
+    await writeFile(broken, original);
+    const captured = captureIO();
+    assert.equal(await main(['--in-place', directory], captured.io), 1);
+    assert.deepEqual(await readFile(broken), original);
+    const stdout = captured.stdout.join('');
+    assert.match(stdout, /失败 1/);
+    assert.match(stdout, /压缩比（压缩后\/原始）：100\.00%/);
+    assert.match(stdout, /节省比例：0\.00%/);
+    assert.doesNotMatch(stdout, /NaN|Infinity/);
+  });
+});
+
+test('原地 CLI 无法确定文件大小时标明不完整统计并停止计算比率', async () => {
+  await withTempDirectory(async (directory) => {
+    const captured = captureIO();
+    assert.equal(await main(['--in-place', join(directory, 'missing.png')], captured.io), 1);
+    const stdout = captured.stdout.join('');
+    assert.match(stdout, /统计不完整/);
+    assert.match(stdout, /压缩比（压缩后\/原始）：不适用（统计不完整）/);
+    assert.doesNotMatch(stdout, /NaN|Infinity/);
+  });
 });

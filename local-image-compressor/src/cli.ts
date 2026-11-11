@@ -2,9 +2,7 @@ import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 
-import { runBatch, type BatchItem, type BatchResult } from './batch.js';
-/** 命令行默认值；与批处理 API 保持一致。 */
-const DEFAULT_MAX_PIXELS = 16_000_000;
+import { DEFAULT_MAX_PIXELS, runBatch, type BatchItem, type BatchResult } from './batch.js';
 
 /** 可注入的终端输出，便于测试命令行错误和摘要。 */
 export interface CliIO {
@@ -15,7 +13,8 @@ export interface CliIO {
 /** 解析后的命令行参数。 */
 export interface CliOptions {
   inputPaths: string[];
-  outputDir: string;
+  outputDir?: string;
+  inPlace: boolean;
   recursive: boolean;
   reportPath?: string;
   maxPixels: number;
@@ -26,20 +25,24 @@ export type CliExitCode = 0 | 1 | 2;
 
 /** 展示命令行用法与目录输出规则。 */
 export const HELP_TEXT = `用法：npm run compress -- [选项] <文件或目录...>
+      npm run compress:here -- [目录或文件...]
 
 选项：
   -o, --output <目录>       输出目录（默认：当前目录/compressed）
   -r, --recursive           递归处理目录中的图片
+      --in-place            递归压缩并原地替换；不传路径时处理当前工作目录
       --max-pixels <数量>   单张图片的像素上限（默认：16000000）
       --report <文件>       写出 JSON 报告；目标文件必须不存在
   -h, --help                显示帮助
 
 支持扩展名：png、jpg、jpeg、webp。目录输入默认只处理当前层；使用 --recursive 才会进入子目录。
+--in-place 自动递归，不能与 --output 同时使用；只替换更小且质量达标的图片，未达标原图不写入。
 PNG 只使用固定 256 色感知量化方案，无需选择算法或质量档位。
 质量门槛固定为整体 RMSE ≤ 4、最坏 16×16 区块 RMSE ≤ 12；有真实缩小才输出压缩结果。
 体积或质量不达标时保留原图；JSON 报告的 attempts 记录编码体积、质量和拒绝原因。
 单个目录的图片保持相对目录结构；多个目录输入时，会在相对路径前加各目录的 basename，仍冲突时该项会报错。
-输出不会覆盖已有文件或源图；输出目录是输入目录的子目录时会排除整个输出子树。
+普通输出模式不会覆盖已有文件或源图；输出目录是输入目录的子目录时会排除整个输出子树。
+最后显示原始总大小、压缩后总大小、压缩比（压缩后/原始）及节省比例。
 `;
 
 /** 返回默认的终端输出实现。 */
@@ -78,6 +81,7 @@ export function parseCliArgs(argv: string[], cwd = process.cwd()): CliOptions | 
     options: {
       output: { type: 'string', short: 'o' },
       recursive: { type: 'boolean', short: 'r' },
+      'in-place': { type: 'boolean' },
       help: { type: 'boolean', short: 'h' },
       report: { type: 'string' },
       'max-pixels': { type: 'string' },
@@ -87,11 +91,15 @@ export function parseCliArgs(argv: string[], cwd = process.cwd()): CliOptions | 
   });
 
   if (parsed.values.help === true) return 'help';
-  if (parsed.positionals.length === 0) {
+  const inPlace = parsed.values['in-place'] === true;
+  if (parsed.positionals.length === 0 && !inPlace) {
     throw new Error('至少需要一个输入文件或目录；使用 --help 查看用法');
   }
 
-  const output = optionString(parsed.values.output, '--output') ?? resolve(cwd, 'compressed');
+  if (inPlace && parsed.values.output !== undefined) {
+    throw new Error('--in-place 不能与 --output 同时使用');
+  }
+  const output = inPlace ? undefined : optionString(parsed.values.output, '--output') ?? resolve(cwd, 'compressed');
   const report = optionString(parsed.values.report, '--report');
   const maxPixelsValue = optionString(parsed.values['max-pixels'], '--max-pixels');
   const maxPixels = maxPixelsValue === undefined
@@ -99,9 +107,10 @@ export function parseCliArgs(argv: string[], cwd = process.cwd()): CliOptions | 
     : positiveInteger(maxPixelsValue, '--max-pixels');
 
   return {
-    inputPaths: parsed.positionals,
+    inputPaths: parsed.positionals.length === 0 ? [resolve(cwd)] : parsed.positionals,
     outputDir: output,
-    recursive: parsed.values.recursive === true,
+    inPlace,
+    recursive: inPlace || parsed.values.recursive === true,
     reportPath: report,
     maxPixels,
   };
@@ -129,16 +138,25 @@ function printItem(item: BatchItem, io: CliIO): void {
 }
 
 /** 输出批处理总计与报告位置。 */
-function printSummary(result: BatchResult, io: CliIO): void {
+function printSummary(result: BatchResult, io: CliIO, inPlace: boolean): void {
   const { summary } = result;
+  const incomplete = inPlace && (summary.unknownInputSize > 0 || summary.unknownOutputSize > 0);
   io.stdout(
     `完成：成功 ${summary.compressed + summary.kept}（压缩 ${summary.compressed}，保留 ${summary.kept}），` +
-    `失败 ${summary.failed}，跳过 ${summary.skipped}；` +
-    `${formatBytes(summary.inputBytes)} -> ${formatBytes(summary.outputBytes)}，` +
-    `节省 ${summary.inputBytes === 0
-      ? '0.0'
-      : ((1 - summary.outputBytes / summary.inputBytes) * 100).toFixed(1)}%\n`,
+    `失败 ${summary.failed}，跳过 ${summary.skipped}\n`,
   );
+  io.stdout(`原始总大小：${formatBytes(summary.inputBytes)}（${summary.inputBytes} 字节）${inPlace && summary.unknownInputSize > 0 ? '，统计不完整' : ''}\n`);
+  io.stdout(`压缩后总大小：${formatBytes(summary.outputBytes)}（${summary.outputBytes} 字节）${inPlace && summary.unknownOutputSize > 0 ? '，统计不完整' : ''}\n`);
+  // 压缩比采用压缩后除以原始的口径，并单列节省比例，避免同一百分比产生两种解释。
+  const ratio = incomplete || summary.inputBytes === 0 ? undefined : summary.outputBytes / summary.inputBytes;
+  const unavailable = incomplete ? '不适用（统计不完整）' : '不适用（原始总大小为 0）';
+  io.stdout(`压缩比（压缩后/原始）：${ratio === undefined ? unavailable : `${(ratio * 100).toFixed(2)}%`}\n`);
+  io.stdout(`节省比例：${ratio === undefined ? unavailable : `${((1 - ratio) * 100).toFixed(2)}%`}\n`);
+  if (summary.failed > 0) {
+    io.stdout(inPlace
+      ? `失败项按处理前原始大小及处理后实际大小计入；未知原始大小 ${summary.unknownInputSize} 项，未知最终大小 ${summary.unknownOutputSize} 项。\n`
+      : '大小统计仅包含成功输出的图片，失败项不计入。\n');
+  }
   if (result.reportPath !== undefined && result.reportError === undefined) {
     io.stdout(`报告：${result.reportPath}\n`);
   }
@@ -164,14 +182,14 @@ export async function main(argv = process.argv.slice(2), io = defaultIO()): Prom
 
   let result: BatchResult;
   try {
-    io.stdout(`开始处理 ${parsed.inputPaths.length} 个输入...\n`);
+    io.stdout(`开始${parsed.inPlace ? '原地递归' : ''}处理 ${parsed.inputPaths.length} 个输入...\n`);
     result = await runBatch(parsed);
   } catch (error) {
     io.stderr(`错误：${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
   }
   for (const item of result.files) printItem(item, io);
-  printSummary(result, io);
+  printSummary(result, io, parsed.inPlace);
   return result.summary.failed === 0 && result.reportError === undefined ? 0 : 1;
 }
 

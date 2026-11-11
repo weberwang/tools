@@ -12,6 +12,7 @@
     "check": "tsc -p tsconfig.check.json",
     "test": "tsx --test tests/*.test.ts",
     "compress": "tsx src/cli.ts",
+    "compress:here": "tsx src/cli.ts --in-place",
     "lint": "eslint src tests"
   },
   "dependencies": {
