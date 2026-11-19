@@ -1,0 +1,294 @@
+{
+  "software_name": "StudioAgent",
+  "project_root": "/Users/xxx/Documents/code/Software Copyright/StudioAgent",
+  "instruction": "本文件只收集证据，不决定行业、功能或手册结构。请由模型阅读这些证据以及必要的项目源码后，另行编写业务理解模型稿。",
+  "documents": [
+    {
+      "path": "CLAUDE.md",
+      "size": 8114,
+      "headings": [
+        "CLAUDE.md",
+        "Commands",
+        "Development",
+        "Database",
+        "Quality",
+        "Running single backend test",
+        "Architecture",
+        "Backend (`backend/`)",
+        "Frontend (`frontend/`)",
+        "SSE Protocol",
+        "Interaction Modes",
+        "Key Design Decisions",
+        "MCP Tools Usage",
+        "Skills",
+        "Project Status"
+      ],
+      "opening": "CLAUDE.md This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. Commands Development Database Quality Running single backend test Architecture Three-layer system: Frontend (Next.js 15) ←SSE/REST→ Backend (FastAPI + LangGraph) ←Celery→ Workers Backend ( backend/ ) Entry : app/main.py — FastAPI app mounting 7 routers under /api/v1/ (auth, projects, conversations, assets, asset-hub, candidates, billing). Agent System ( app/agents/ ): - graph.py — LangGraph Swarm with 6 agents (Producer, Screenwriter, Director, Camera, Editor, Sound). Star topology : Producer is the hub; all others hand off only back to Producer. Uses create swarm() from langgraph swarm . - state.py — ProductionState TypedDict. Uses dynamic completed steps + available assets (not fixed phase enum). Producer reads state to decide next actions autonomously. - tools/confirm.py —"
+    },
+    {
+      "path": "README.md",
+      "size": 4527,
+      "headings": [
+        "StudioAgent",
+        "架构",
+        "技术栈",
+        "快速开始",
+        "前置要求",
+        "安装启动",
+        "克隆项目",
+        "复制环境变量文件并填入你的密钥",
+        "安装依赖",
+        "启动基础设施（PostgreSQL + Redis）和开发服务器",
+        "全容器化启动",
+        "数据库迁移",
+        "项目结构",
+        "核心设计理念",
+        "开发命令",
+        "项目状态",
+        "许可证"
+      ],
+      "opening": "StudioAgent 多智能体 AI 视频制片平台。用户用自然语言描述创意想法，6 个专业 AI Agent 协作完成剧本、分镜、图像、视频和音频的生产——全程支持人机协同控制。 架构 6 个 AI Agent ，通过 LangGraph Swarm 构建星形拓扑： Agent 职责 ------- ------ Producer（制片人） 中枢节点——规划、协调、自主决策下一步行动 Screenwriter（编剧） 故事分析、角色提取、分集剧本生成 Director（导演） 分镜设计、镜头编排、视觉连续性把控 Camera（摄影师） 图像生成（角色、场景、分镜画面） Editor（剪辑师） 视频组装、转场、时间线编辑 Sound（音效师） 对白、语音合成、音效、背景音乐 Producer 是唯一的中枢——所有其他 Agent 完成任务后只能交回 Producer。 技术栈 层级 技术 ------ ------ 前端 Next.js 15、React 19、Tailwind CSS 4、Zustand、TanStack Query、Framer Motion 后端 Python 3.12、FastAPI、LangGraph Swarm、SQLAlchemy 2.0、Celery 数据库 PostgreSQL 16、Redis LLM OpenRouter (Claude)、Google (Gemini)、VolcEngine (豆包) 图像生成 Seedream、Imagen、FLUX 视频生成 Seedance、Veo、Kling 语音生成 Qwen TTS、ElevenLabs 快速开始 前置要求 - Python 3.12+ - Node.js 20+ - Docker & Docker Compose 安装启动 全容器化启动 数据库迁移 项目结构 核心设计理念 - 目标驱动编排 ：Producer 根据状态自主决策下一步，而非固定流水线 - Agent 驱动中断 ：通过 LangGraph interrupt() 实现人机协同，由 Agent 判断何时暂停"
+    },
+    {
+      "path": "docs/ARCHITECTURE_AND_PLAN.md",
+      "size": 20046,
+      "headings": [
+        "StudioAgent — 项目架构与实施计划",
+        "一、已完成工作",
+        "1.1 项目架构骨架（已完成）",
+        "后端（Python + FastAPI + LangGraph）",
+        "后端 API 路由（7 个模块，40+ 端点）",
+        "后端数据模型（SQLAlchemy ORM，对应 PRD 第九章 20+ 张表）",
+        "后端 Agent 系统（PRD 第三章核心架构）",
+        "后端 LLM Provider 层（PRD 第七章）",
+        "后端多模态生成器（PRD 第七章 7.2-7.3）",
+        "后端 Workers（Celery 异步任务）",
+        "前端（Next.js 15 + React 19）",
+        "前端页面路由（PRD 第十一章 11.2）",
+        "前端组件与 Hooks",
+        "基础设施",
+        "二、待实施计划",
+        "M0: 骨架 — 跑通最小闭环（2 周）",
+        "M1: 双 Agent — Producer + Screenwriter 闭环（2 周）",
+        "M2: 全 Agent — 6 Agent 全部上线（3 周）",
+        "M3: 产品化 — 可用产品（3 周）",
+        "M4: 发布 — 公开 Beta（2 周）",
+        "三、技术风险与缓解（PRD 第十五章）",
+        "四、启动指引",
+        "1. 安装依赖",
+        "2. 配置环境变量"
+      ],
+      "opening": "StudioAgent — 项目架构与实施计划 文档版本 : v1.0 日期 : 2026-03-04 基于 : STUDIO AGENT PRD.md v1.2 --- 一、已完成工作 1.1 项目架构骨架（已完成） 基于 PRD 第十二章目录结构，完整创建了前后端项目骨架。共 90+ 文件 ，覆盖三层架构的所有模块。 后端（Python + FastAPI + LangGraph） 模块 文件 状态 说明 ------ ------ ------ ------ 项目配置 pyproject.toml ✅ 完成 Python 3.12，含 FastAPI/LangGraph/SQLAlchemy/Celery 等全部依赖 应用入口 app/main.py ✅ 完成 FastAPI 应用，CORS 配置，7 个路由模块挂载，健康检查端点 配置管理 app/config.py ✅ 完成 Pydantic Settings，全部环境变量定义（DB/Redis/LLM/媒体生成/存储） 依赖注入 app/deps.py ✅ 完成 数据库 session 依赖，带事务管理 数据库 app/db/session.py ✅ 完成 AsyncEngine + AsyncSessionFactory Alembic alembic.ini ✅ 骨架 配置文件就位，待创建 env.py 和初始迁移 Celery celery app.py ✅ 完成 4 个队列（image/video/voice/text），按类型路由 后端 API 路由（7 个模块，40+ 端点） 路由模块 文件 端点数 状态 --------- ------ -------- ------ 认证 api/auth.py 3 ✅ 骨架（register/login/me） 项目 api/projects.py 5 ✅ 骨架（CRUD + 软删除） 对话 api/conversations.py 8 ✅ 骨架（核心 SSE 流已实现占位） 项目资产 api/assets.py 9 ✅ 骨架（角色/场景/剧集/分镜/任务/"
+    },
+    {
+      "path": "docs/STUDIO_AGENT_PRD.md",
+      "size": 105148,
+      "headings": [
+        "StudioAgent — AI 制片 Agent 平台 PRD",
+        "一、产品概述",
+        "1.1 一句话描述",
+        "1.2 核心价值主张",
+        "1.3 目标用户",
+        "1.4 成功指标",
+        "二、系统架构（参考 pi-mono 分层模式）",
+        "2.1 架构设计哲学",
+        "2.2 对比 pi-mono 的设计借鉴",
+        "三、Agent 系统详细设计",
+        "3.0 动态编排哲学",
+        "3.1 Agent 角色定义",
+        "Producer 的四大核心能力",
+        "3.2 LangGraph Swarm 编排（核心架构代码）",
+        "backend/app/agents/graph.py",
+        "═══════════ 全局状态（动态感知，非固定阶段）═══════════",
+        "── 动态状态（取代 current_phase 固定阶段枚举）──",
+        "Producer 通过此字段感知\"项目到了哪\"，而非被阶段限制",
+        "Producer 通过此字段感知\"项目有什么、缺什么\"",
+        "── 用户交互偏好 ──",
+        "\"autonomous\"（用户授权自动执行，仅终审确认）",
+        "\"supervised\"（每步确认，类似传统 workflow）",
+        "── Agent 运行时 ──",
+        "═══════════ Handoff 工具 ═══════════"
+      ],
+      "opening": "StudioAgent — AI 制片 Agent 平台 PRD Product Requirements Document 版本：v1.0 日期：2026-03-03 基于 BRD v0.1 细化，参考 pi-mono 架构模式 + LangGraph 最佳实践 --- 一、产品概述 1.1 一句话描述 StudioAgent 是一个多 Agent 协作的 AI 制片平台——用户通过自然语言对话，指挥一个由 Producer、Screenwriter、Director、Camera、Editor、Sound 组成的 AI 剧组，全自动完成从创意到成片的视频制作。 1.2 核心价值主张 用户痛点 StudioAgent 解法 --------- ----------------- 工具类产品需要逐步操作，用户是\"操作员\" 对话驱动，用户是\"甲方/监制\"，AI 自主规划执行 单点 AI 生成缺乏全局理解，角色/画风不一致 多 Agent 协作推理，Director 负责视觉连贯性审核 固定流水线无法应对创意变更 LangGraph 动态编排，任意阶段可打断/修改/重做 各 AI 工具分散，用户需要手动串联 统一平台集成 LLM + 图片 + 视频 + 语音，Agent 自动串联 1.3 目标用户 用户类型 核心诉求 典型对话 --------- --------- --------- 小说/IP 作者 零成本把作品视觉化 \"把我的小说做成 10 集短剧\" 短视频创作者 批量生产高质量内容 \"做一条 30 秒的产品广告\" 影视从业者 快速出预览/概念片 \"按这个分镜脚本出 animatic\" 企业市场部 低成本品牌视频 \"做一条企业年会宣传片\" 1.4 成功指标 指标 基线 M3 目标 M4 目标 ------ ------ --------- --------- 完整制作流程完成率 0% ≥60% ≥80% 平均完成一部 10 分镜短片耗时 N/A ≤30 min ≤15 min 用户 7 日留存率 0% ≥25% ≥40% Agent 回复满意度（用户评分） N/A ≥"
+    },
+    {
+      "path": "backend/app/llm/prompts/camera.md",
+      "size": 1035,
+      "headings": [
+        "Camera Agent — 摄影",
+        "核心职责",
+        "工作原则",
+        "参考图机制"
+      ],
+      "opening": "Camera Agent — 摄影 你是 StudioAgent 制片团队的摄影师（Camera），负责所有视觉素材的生成。 核心职责 1. 角色形象生成 — 根据角色描述生成多张候选形象 2. 场景图生成 — 根据场景描述生成环境图 3. 分镜画面生成 — 根据分镜描述 + 角色/场景参考图生成画面 4. 图片修改 — 根据用户反馈修改已有图片 工作原则 - 生成候选图时默认生成 4 张，供用户选择 - 分镜画面生成时自动收集角色形象和场景图作为参考 - 保持画风一致性（同一项目使用统一的 style 参数） - 角色形象要从正面、半身、高清的角度生成 - 完成任务后通过 handoff 交还给 Producer 参考图机制 生成分镜画面时，会自动收集： 1. 该分镜中出现的角色的已确认形象 2. 该分镜所在场景的已确认场景图 3. 用户上传的草图（如有） 这些参考图作为 AI 模型的 image reference 传入，确保画面一致性。"
+    },
+    {
+      "path": "backend/app/llm/prompts/director.md",
+      "size": 1021,
+      "headings": [
+        "Director Agent — 导演",
+        "核心职责",
+        "工作原则",
+        "运镜指令词汇"
+      ],
+      "opening": "Director Agent — 导演 你是 StudioAgent 制片团队的导演（Director），负责视觉叙事和镜头语言。 核心职责 1. 分镜生成 — 根据剧本生成分镜脚本（画面描述 + 镜头语言） 2. 镜头规划 — 为每个分镜设计最佳的拍摄角度和运镜方式 3. 视觉一致性审核 — 审查角色形象和场景的视觉连贯性 4. 镜头变体建议 — 分析当前画面，建议多种构图/角度变体 工作原则 - 镜头语言要服务于叙事，不为炫技而炫技 - 保证角色在不同分镜中的外观一致性 - 分镜描述要足够详细，可直接用于 AI 图片生成 - 合理运用推拉摇移等运镜技巧增加画面表现力 - 完成任务后通过 handoff 交还给 Producer 运镜指令词汇 push in（推近）, pull out（拉远）, pan left（左摇）, pan right（右摇）, tilt up（上仰）, tilt down（下俯）, orbit（环绕）, static（静态）, zoom in（变焦推近）, dolly（跟拍）"
+    },
+    {
+      "path": "backend/app/llm/prompts/editor.md",
+      "size": 586,
+      "headings": [
+        "Editor Agent — 剪辑",
+        "核心职责",
+        "工作原则"
+      ],
+      "opening": "Editor Agent — 剪辑 你是 StudioAgent 制片团队的剪辑师（Editor），负责视频生成和时间轴编排。 核心职责 1. 图生视频 — 将分镜画面通过 AI 模型生成视频片段 2. 视频延长 — 延长视频片段时长 3. 时间轴编排 — 将多个视频片段按顺序拼接，添加转场效果 工作原则 - 视频 prompt 要包含具体的运动描述 - 运镜指令要与 Director 规划的一致 - 默认每个分镜 5 秒时长 - 转场效果要符合叙事节奏 - 完成任务后通过 handoff 交还给 Producer"
+    },
+    {
+      "path": "backend/app/llm/prompts/producer.md",
+      "size": 2769,
+      "headings": [
+        "Producer Agent — 制片人 / 总调度",
+        "核心身份",
+        "你的四大核心能力",
+        "1. 意图理解",
+        "2. 项目状态感知",
+        "3. 自适应确认策略",
+        "何时应该请求用户确认（interrupt）",
+        "何时可以自主继续（不 interrupt）",
+        "何时应该讨论而非执行",
+        "4. 错误恢复",
+        "协作策略",
+        "沟通风格"
+      ],
+      "opening": "Producer Agent — 制片人 / 总调度 你是 StudioAgent 制片团队的制片人（Producer），是整个 AI 剧组的智能决策者和总调度。 核心身份 你不是一个按预设步骤执行的状态机，而是一个自主决策的 Agent。类比 Claude Code——根据当前理解动态决定下一步做什么，做完一步看结果再决定下一步。 你的四大核心能力 1. 意图理解 识别用户当前想做什么，不是所有对话都是\"执行任务\"： - 完整制作 ：\"把这个小说做成短剧\" → 自主规划完整流程，在关键节点请求确认 - 局部修改 ：\"换个角色形象\" / \"第 3 个分镜重新拍\" → 直接 handoff 到对应 Agent - 讨论/咨询 ：\"你觉得这个剧本怎么改好？\" → 提供分析和建议，不执行操作 - 等待/暂停 ：\"等一下，让我想想\" → 进入等待状态 - 方向变更 ：\"之前的分镜不好，从角色重来\" → 回溯到指定阶段 2. 项目状态感知 通过 query project status 工具了解\"项目当前有什么、缺什么\"，据此决定下一步。 3. 自适应确认策略 何时应该请求用户确认（interrupt） - 制定或修改整体制作方案时（影响全局方向） - 首次提取角色/场景设定时（用户可能想调整） - 执行高成本操作前（如批量生成 10 张图片、生成视频） - 你对下一步不确定时（用户意图模糊） - 生成的结果可能不符合预期时（如模型降级后的结果） 何时可以自主继续（不 interrupt） - 用户给了明确具体的指令（如\"把角色A的头发改成短发\"） - 执行低成本操作（如修改单个描述、收集参考图） - 内部协调步骤（如 Agent 间 handoff、参数准备） - 用户已在 autonomous 模式下 何时应该讨论而非执行 - 用户在提问或寻求建议 - 用户表达犹豫或不确定 - 用户说\"等一下\"/\"让我想想\" 4. 错误恢复 遇到问题不是直接报错停止，而是自主尝试替代方案： - 图片生成失败 → 自动降级到备选模型 → 告知用户 - 视频生成失败 → 重试一次 → 仍失败 →"
+    },
+    {
+      "path": "backend/app/llm/prompts/screenwriter.md",
+      "size": 1145,
+      "headings": [
+        "Screenwriter Agent — 编剧",
+        "核心职责",
+        "工作原则",
+        "输出格式"
+      ],
+      "opening": "Screenwriter Agent — 编剧 你是 StudioAgent 制片团队的编剧（Screenwriter），专注于文本分析和剧本创作。 核心职责 1. 文本分析 — 分析用户提供的小说、故事大纲或文字描述 2. 角色提取 — 从文本中识别和提炼角色信息（姓名、年龄、外貌、性格、声音特征） 3. 场景提取 — 从文本中识别场景/地点信息 4. 剧本生成 — 根据角色、场景和情节生成结构化剧本 5. 剧本编辑 — 根据用户反馈修改剧本 工作原则 - 提取角色时保持完整性，不遗漏重要角色 - 角色描述要具体到可以生成视觉形象的程度 - 剧本结构要适合分镜转化（每个场景有明确的画面描述） - 对白要自然，适合配音朗读 - 完成任务后通过 handoff 交还给 Producer 输出格式 角色提取结果应包含：name, gender, age, appearance（外貌描述）, personality, voice description 剧本应按分镜结构组织：每个 panel 包含 description（画面描述）, dialogue（对白）, camera move（推荐运镜）, duration（建议时长）"
+    },
+    {
+      "path": "backend/app/llm/prompts/sound.md",
+      "size": 637,
+      "headings": [
+        "Sound Agent — 音效",
+        "核心职责",
+        "工作原则"
+      ],
+      "opening": "Sound Agent — 音效 你是 StudioAgent 制片团队的音效师（Sound），负责配音和音效设计。 核心职责 1. 对白分析 — 分析剧本中的对白，匹配角色音色 2. 角色配音 — 使用 TTS 为角色生成配音 3. 音效设计 — 根据场景描述匹配环境音和音效 4. 背景音乐 — 根据氛围匹配合适的背景音乐 工作原则 - 配音情感要与对白内容匹配 - 同一角色在不同分镜中使用相同的 voice id - 音效要与画面内容协调 - 背景音乐氛围要与剧情节奏一致 - 完成任务后通过 handoff 交还给 Producer"
+    }
+  ],
+  "code_evidence": {
+    "project_name": "StudioAgent",
+    "software_name_candidate": "studio agent frontend",
+    "frameworks": [
+      "Next.js",
+      "React"
+    ],
+    "language": "React、TypeScript、JavaScript",
+    "routes": [
+      "/",
+      "/login",
+      "/projects",
+      "/register"
+    ],
+    "feature_name_candidates": [
+      "login",
+      "projects",
+      "register",
+      "settings",
+      "projects settings",
+      "asset hub",
+      "billing",
+      "AgentStatusBar",
+      "MessageBubble",
+      "ChatPanel",
+      "ChatInput",
+      "AssetPanel"
+    ],
+    "entry_files": [
+      "frontend/src/app/layout.tsx",
+      "frontend/src/app/page.tsx"
+    ],
+    "page_files": [
+      "frontend/src/app/providers.tsx",
+      "frontend/src/app/settings/page.tsx",
+      "frontend/src/app/projects/page.tsx",
+      "frontend/src/app/projects/[id]/page.tsx",
+      "frontend/src/app/projects/[id]/settings/page.tsx",
+      "frontend/src/app/asset-hub/page.tsx",
+      "frontend/src/app/(auth)/register/page.tsx",
+      "frontend/src/app/(auth)/login/page.tsx",
+      "frontend/src/app/billing/page.tsx"
+    ],
+    "component_files": [
+      "frontend/src/components/ui/card.tsx",
+      "frontend/src/components/ui/scroll-area.tsx",
+      "frontend/src/components/ui/label.tsx",
+      "frontend/src/components/ui/avatar.tsx",
+      "frontend/src/components/ui/button.tsx",
+      "frontend/src/components/ui/textarea.tsx",
+      "frontend/src/components/ui/input.tsx",
+      "frontend/src/components/agent/AgentStatusBar.tsx",
+      "frontend/src/components/agent/MessageBubble.tsx",
+      "frontend/src/components/agent/ChatPanel.tsx",
+      "frontend/src/components/agent/ChatInput.tsx",
+      "frontend/src/components/assets/AssetPanel.tsx"
+    ],
+    "api_files": [],
+    "run_command_candidates": [
+      "npm run dev",
+      "npm run start"
+    ],
+    "package": {
+      "name": "studio-agent-frontend",
+      "path": "frontend/package.json",
+      "version": "0.1.0",
+      "scripts": {
+        "dev": "next dev --turbopack",
+        "build": "next build",
+        "start": "next start",
+        "lint": "next lint"
+      },
+      "dependency_names": [
+        "@eslint/eslintrc",
+        "@radix-ui/react-avatar",
+        "@radix-ui/react-dialog",
+        "@radix-ui/react-dropdown-menu",
+        "@radix-ui/react-scroll-area",
+        "@radix-ui/react-slot",
+        "@radix-ui/react-tabs",
+        "@radix-ui/react-tooltip",
+        "@tailwindcss/postcss",
+        "@tanstack/react-query",
+        "@types/node",
+        "@types/react",
+        "@types/react-dom",
+        "class-variance-authority",
+        "clsx",
+        "eslint",
+        "eslint-config-next",
+        "framer-motion",
+        "lucide-react",
+        "next",
+        "postcss",
+        "radix-ui",
+        "react",
+        "react-dom",
+        "shadcn",
+        "tailwind-merge",
+        "tailwindcss",
+        "tw-animate-css",
+        "typescript",
+        "zustand"
+      ]
+    }
+  },
+  "external_research_notes": ""
+}

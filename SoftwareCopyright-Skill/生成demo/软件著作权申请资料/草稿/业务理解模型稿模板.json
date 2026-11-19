@@ -1,0 +1,29 @@
+{
+  "software_name": "StudioAgent",
+  "product_positioning": "",
+  "industry": "",
+  "target_users": [],
+  "core_value": "",
+  "business_features": [],
+  "business_feature_details": {},
+  "operation_flow": [],
+  "application_purpose": "",
+  "main_functions": "",
+  "technical_characteristics": "",
+  "software_technical_option": "应用软件",
+  "software_category": "应用软件",
+  "manual_sections": [
+    {
+      "title": "模型自行命名章节",
+      "intent": "说明该章节为什么适合当前项目。",
+      "paragraphs": [],
+      "include_feature_overview": false,
+      "include_operation_modules": false,
+      "include_operation_flow": false
+    }
+  ],
+  "model_review_notes": [
+    "不要照抄范本结构；按当前项目业务组织章节。",
+    "不要用关键词表决定行业和功能；必须能从项目证据或用户补充中解释来源。"
+  ]
+}

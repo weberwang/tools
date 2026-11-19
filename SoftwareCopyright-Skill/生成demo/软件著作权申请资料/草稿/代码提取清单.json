@@ -1,0 +1,852 @@
+{
+  "software_name": "StudioAgent AI视频制片平台软件",
+  "version": "V0.1.0",
+  "project_root": "/Users/xxx/Documents/code/Software Copyright/StudioAgent",
+  "file_count": 92,
+  "material_line_count": 5037,
+  "source_line_count": 4853,
+  "selected_source_line_count": 4853,
+  "lines_per_page": 60,
+  "total_pages": 84,
+  "target_pages": 60,
+  "available_candidate_line_count": 5137,
+  "available_candidate_pages": 86,
+  "supplement_status": "候选源码可达到前30页/后30页要求",
+  "mode": "front30_back30",
+  "selection_file": "软件著作权申请资料/草稿/代码文件选择.json",
+  "outputs": [
+    "代码-前30页.md",
+    "代码-后30页.md"
+  ],
+  "files": [
+    {
+      "path": "frontend/src/app/layout.tsx",
+      "source_line_count": 22,
+      "selected_line_start": 1,
+      "selected_line_end": 22,
+      "selected_line_count": 22,
+      "material_line_start": 1,
+      "material_line_end": 24
+    },
+    {
+      "path": "frontend/src/app/page.tsx",
+      "source_line_count": 24,
+      "selected_line_start": 1,
+      "selected_line_end": 24,
+      "selected_line_count": 24,
+      "material_line_start": 25,
+      "material_line_end": 50
+    },
+    {
+      "path": "backend/app/agents/compaction.py",
+      "source_line_count": 14,
+      "selected_line_start": 1,
+      "selected_line_end": 14,
+      "selected_line_count": 14,
+      "material_line_start": 51,
+      "material_line_end": 66
+    },
+    {
+      "path": "backend/app/agents/graph.py",
+      "source_line_count": 187,
+      "selected_line_start": 1,
+      "selected_line_end": 187,
+      "selected_line_count": 187,
+      "material_line_start": 67,
+      "material_line_end": 255
+    },
+    {
+      "path": "backend/app/agents/session.py",
+      "source_line_count": 25,
+      "selected_line_start": 1,
+      "selected_line_end": 25,
+      "selected_line_count": 25,
+      "material_line_start": 256,
+      "material_line_end": 282
+    },
+    {
+      "path": "backend/app/agents/sse_transformer.py",
+      "source_line_count": 111,
+      "selected_line_start": 1,
+      "selected_line_end": 111,
+      "selected_line_count": 111,
+      "material_line_start": 283,
+      "material_line_end": 395
+    },
+    {
+      "path": "backend/app/agents/state.py",
+      "source_line_count": 82,
+      "selected_line_start": 1,
+      "selected_line_end": 82,
+      "selected_line_count": 82,
+      "material_line_start": 396,
+      "material_line_end": 479
+    },
+    {
+      "path": "backend/app/agents/tools/base.py",
+      "source_line_count": 29,
+      "selected_line_start": 1,
+      "selected_line_end": 29,
+      "selected_line_count": 29,
+      "material_line_start": 480,
+      "material_line_end": 510
+    },
+    {
+      "path": "backend/app/agents/tools/camera_tools.py",
+      "source_line_count": 89,
+      "selected_line_start": 1,
+      "selected_line_end": 89,
+      "selected_line_count": 89,
+      "material_line_start": 511,
+      "material_line_end": 601
+    },
+    {
+      "path": "backend/app/agents/tools/candidate.py",
+      "source_line_count": 14,
+      "selected_line_start": 1,
+      "selected_line_end": 14,
+      "selected_line_count": 14,
+      "material_line_start": 602,
+      "material_line_end": 617
+    },
+    {
+      "path": "backend/app/agents/tools/confirm.py",
+      "source_line_count": 38,
+      "selected_line_start": 1,
+      "selected_line_end": 38,
+      "selected_line_count": 38,
+      "material_line_start": 618,
+      "material_line_end": 657
+    },
+    {
+      "path": "backend/app/agents/tools/director_tools.py",
+      "source_line_count": 52,
+      "selected_line_start": 1,
+      "selected_line_end": 52,
+      "selected_line_count": 52,
+      "material_line_start": 658,
+      "material_line_end": 711
+    },
+    {
+      "path": "backend/app/agents/tools/editor_tools.py",
+      "source_line_count": 52,
+      "selected_line_start": 1,
+      "selected_line_end": 52,
+      "selected_line_count": 52,
+      "material_line_start": 712,
+      "material_line_end": 765
+    },
+    {
+      "path": "backend/app/agents/tools/global_asset_picker.py",
+      "source_line_count": 11,
+      "selected_line_start": 1,
+      "selected_line_end": 11,
+      "selected_line_count": 11,
+      "material_line_start": 766,
+      "material_line_end": 778
+    },
+    {
+      "path": "backend/app/agents/tools/producer_tools.py",
+      "source_line_count": 97,
+      "selected_line_start": 1,
+      "selected_line_end": 97,
+      "selected_line_count": 97,
+      "material_line_start": 779,
+      "material_line_end": 877
+    },
+    {
+      "path": "backend/app/agents/tools/reference_collector.py",
+      "source_line_count": 29,
+      "selected_line_start": 1,
+      "selected_line_end": 29,
+      "selected_line_count": 29,
+      "material_line_start": 878,
+      "material_line_end": 908
+    },
+    {
+      "path": "backend/app/agents/tools/screenwriter_tools.py",
+      "source_line_count": 69,
+      "selected_line_start": 1,
+      "selected_line_end": 69,
+      "selected_line_count": 69,
+      "material_line_start": 909,
+      "material_line_end": 979
+    },
+    {
+      "path": "backend/app/agents/tools/sound_tools.py",
+      "source_line_count": 60,
+      "selected_line_start": 1,
+      "selected_line_end": 60,
+      "selected_line_count": 60,
+      "material_line_start": 980,
+      "material_line_end": 1041
+    },
+    {
+      "path": "backend/app/api/asset_hub.py",
+      "source_line_count": 124,
+      "selected_line_start": 1,
+      "selected_line_end": 124,
+      "selected_line_count": 124,
+      "material_line_start": 1042,
+      "material_line_end": 1167
+    },
+    {
+      "path": "backend/app/api/assets.py",
+      "source_line_count": 59,
+      "selected_line_start": 1,
+      "selected_line_end": 59,
+      "selected_line_count": 59,
+      "material_line_start": 1168,
+      "material_line_end": 1228
+    },
+    {
+      "path": "backend/app/api/auth.py",
+      "source_line_count": 43,
+      "selected_line_start": 1,
+      "selected_line_end": 43,
+      "selected_line_count": 43,
+      "material_line_start": 1229,
+      "material_line_end": 1273
+    },
+    {
+      "path": "backend/app/api/billing.py",
+      "source_line_count": 23,
+      "selected_line_start": 1,
+      "selected_line_end": 23,
+      "selected_line_count": 23,
+      "material_line_start": 1274,
+      "material_line_end": 1298
+    },
+    {
+      "path": "backend/app/api/candidates.py",
+      "source_line_count": 52,
+      "selected_line_start": 1,
+      "selected_line_end": 52,
+      "selected_line_count": 52,
+      "material_line_start": 1299,
+      "material_line_end": 1352
+    },
+    {
+      "path": "backend/app/api/conversations.py",
+      "source_line_count": 153,
+      "selected_line_start": 1,
+      "selected_line_end": 153,
+      "selected_line_count": 153,
+      "material_line_start": 1353,
+      "material_line_end": 1507
+    },
+    {
+      "path": "backend/app/api/projects.py",
+      "source_line_count": 65,
+      "selected_line_start": 1,
+      "selected_line_end": 65,
+      "selected_line_count": 65,
+      "material_line_start": 1508,
+      "material_line_end": 1574
+    },
+    {
+      "path": "backend/app/config.py",
+      "source_line_count": 72,
+      "selected_line_start": 1,
+      "selected_line_end": 72,
+      "selected_line_count": 72,
+      "material_line_start": 1575,
+      "material_line_end": 1648
+    },
+    {
+      "path": "backend/app/db/migrations/env.py",
+      "source_line_count": 67,
+      "selected_line_start": 1,
+      "selected_line_end": 67,
+      "selected_line_count": 67,
+      "material_line_start": 1649,
+      "material_line_end": 1717
+    },
+    {
+      "path": "backend/app/db/migrations/versions/001_initial_schema.py",
+      "source_line_count": 224,
+      "selected_line_start": 1,
+      "selected_line_end": 224,
+      "selected_line_count": 224,
+      "material_line_start": 1718,
+      "material_line_end": 1943
+    },
+    {
+      "path": "backend/app/db/session.py",
+      "source_line_count": 24,
+      "selected_line_start": 1,
+      "selected_line_end": 24,
+      "selected_line_count": 24,
+      "material_line_start": 1944,
+      "material_line_end": 1969
+    },
+    {
+      "path": "backend/app/deps.py",
+      "source_line_count": 67,
+      "selected_line_start": 1,
+      "selected_line_end": 67,
+      "selected_line_count": 67,
+      "material_line_start": 1970,
+      "material_line_end": 2038
+    },
+    {
+      "path": "backend/app/generators/base.py",
+      "source_line_count": 30,
+      "selected_line_start": 1,
+      "selected_line_end": 30,
+      "selected_line_count": 30,
+      "material_line_start": 2039,
+      "material_line_end": 2070
+    },
+    {
+      "path": "backend/app/generators/image/flux.py",
+      "source_line_count": 11,
+      "selected_line_start": 1,
+      "selected_line_end": 11,
+      "selected_line_count": 11,
+      "material_line_start": 2071,
+      "material_line_end": 2083
+    },
+    {
+      "path": "backend/app/generators/image/imagen.py",
+      "source_line_count": 11,
+      "selected_line_start": 1,
+      "selected_line_end": 11,
+      "selected_line_count": 11,
+      "material_line_start": 2084,
+      "material_line_end": 2096
+    },
+    {
+      "path": "backend/app/generators/image/seedream.py",
+      "source_line_count": 11,
+      "selected_line_start": 1,
+      "selected_line_end": 11,
+      "selected_line_count": 11,
+      "material_line_start": 2097,
+      "material_line_end": 2109
+    },
+    {
+      "path": "backend/app/generators/video/kling.py",
+      "source_line_count": 11,
+      "selected_line_start": 1,
+      "selected_line_end": 11,
+      "selected_line_count": 11,
+      "material_line_start": 2110,
+      "material_line_end": 2122
+    },
+    {
+      "path": "backend/app/generators/video/seedance.py",
+      "source_line_count": 11,
+      "selected_line_start": 1,
+      "selected_line_end": 11,
+      "selected_line_count": 11,
+      "material_line_start": 2123,
+      "material_line_end": 2135
+    },
+    {
+      "path": "backend/app/generators/video/veo.py",
+      "source_line_count": 11,
+      "selected_line_start": 1,
+      "selected_line_end": 11,
+      "selected_line_count": 11,
+      "material_line_start": 2136,
+      "material_line_end": 2148
+    },
+    {
+      "path": "backend/app/generators/voice/elevenlabs.py",
+      "source_line_count": 11,
+      "selected_line_start": 1,
+      "selected_line_end": 11,
+      "selected_line_count": 11,
+      "material_line_start": 2149,
+      "material_line_end": 2161
+    },
+    {
+      "path": "backend/app/generators/voice/qwen_tts.py",
+      "source_line_count": 11,
+      "selected_line_start": 1,
+      "selected_line_end": 11,
+      "selected_line_count": 11,
+      "material_line_start": 2162,
+      "material_line_end": 2174
+    },
+    {
+      "path": "backend/app/llm/__init__.py",
+      "source_line_count": 85,
+      "selected_line_start": 1,
+      "selected_line_end": 85,
+      "selected_line_count": 85,
+      "material_line_start": 2175,
+      "material_line_end": 2261
+    },
+    {
+      "path": "backend/app/llm/base.py",
+      "source_line_count": 53,
+      "selected_line_start": 1,
+      "selected_line_end": 53,
+      "selected_line_count": 53,
+      "material_line_start": 2262,
+      "material_line_end": 2316
+    },
+    {
+      "path": "backend/app/main.py",
+      "source_line_count": 76,
+      "selected_line_start": 1,
+      "selected_line_end": 76,
+      "selected_line_count": 76,
+      "material_line_start": 2317,
+      "material_line_end": 2394
+    },
+    {
+      "path": "backend/app/models/asset.py",
+      "source_line_count": 124,
+      "selected_line_start": 1,
+      "selected_line_end": 124,
+      "selected_line_count": 124,
+      "material_line_start": 2395,
+      "material_line_end": 2520
+    },
+    {
+      "path": "backend/app/models/conversation.py",
+      "source_line_count": 37,
+      "selected_line_start": 1,
+      "selected_line_end": 37,
+      "selected_line_count": 37,
+      "material_line_start": 2521,
+      "material_line_end": 2559
+    },
+    {
+      "path": "backend/app/models/project.py",
+      "source_line_count": 23,
+      "selected_line_start": 1,
+      "selected_line_end": 23,
+      "selected_line_count": 23,
+      "material_line_start": 2560,
+      "material_line_end": 2584
+    },
+    {
+      "path": "backend/app/models/task.py",
+      "source_line_count": 45,
+      "selected_line_start": 1,
+      "selected_line_end": 45,
+      "selected_line_count": 45,
+      "material_line_start": 2585,
+      "material_line_end": 2631
+    },
+    {
+      "path": "backend/app/models/user.py",
+      "source_line_count": 27,
+      "selected_line_start": 1,
+      "selected_line_end": 27,
+      "selected_line_count": 27,
+      "material_line_start": 2632,
+      "material_line_end": 2660
+    },
+    {
+      "path": "backend/app/schemas/auth.py",
+      "source_line_count": 31,
+      "selected_line_start": 1,
+      "selected_line_end": 31,
+      "selected_line_count": 31,
+      "material_line_start": 2661,
+      "material_line_end": 2693
+    },
+    {
+      "path": "backend/app/schemas/conversation.py",
+      "source_line_count": 41,
+      "selected_line_start": 1,
+      "selected_line_end": 41,
+      "selected_line_count": 41,
+      "material_line_start": 2694,
+      "material_line_end": 2736
+    },
+    {
+      "path": "backend/app/schemas/project.py",
+      "source_line_count": 31,
+      "selected_line_start": 1,
+      "selected_line_end": 31,
+      "selected_line_count": 31,
+      "material_line_start": 2737,
+      "material_line_end": 2769
+    },
+    {
+      "path": "backend/app/services/auth_service.py",
+      "source_line_count": 46,
+      "selected_line_start": 1,
+      "selected_line_end": 46,
+      "selected_line_count": 46,
+      "material_line_start": 2770,
+      "material_line_end": 2817
+    },
+    {
+      "path": "backend/app/services/conversation_service.py",
+      "source_line_count": 62,
+      "selected_line_start": 1,
+      "selected_line_end": 62,
+      "selected_line_count": 62,
+      "material_line_start": 2818,
+      "material_line_end": 2881
+    },
+    {
+      "path": "backend/app/services/project_service.py",
+      "source_line_count": 45,
+      "selected_line_start": 1,
+      "selected_line_end": 45,
+      "selected_line_count": 45,
+      "material_line_start": 2882,
+      "material_line_end": 2928
+    },
+    {
+      "path": "backend/app/workers/image_worker.py",
+      "source_line_count": 9,
+      "selected_line_start": 1,
+      "selected_line_end": 9,
+      "selected_line_count": 9,
+      "material_line_start": 2929,
+      "material_line_end": 2939
+    },
+    {
+      "path": "backend/app/workers/text_worker.py",
+      "source_line_count": 9,
+      "selected_line_start": 1,
+      "selected_line_end": 9,
+      "selected_line_count": 9,
+      "material_line_start": 2940,
+      "material_line_end": 2950
+    },
+    {
+      "path": "backend/app/workers/video_worker.py",
+      "source_line_count": 9,
+      "selected_line_start": 1,
+      "selected_line_end": 9,
+      "selected_line_count": 9,
+      "material_line_start": 2951,
+      "material_line_end": 2961
+    },
+    {
+      "path": "backend/app/workers/voice_worker.py",
+      "source_line_count": 9,
+      "selected_line_start": 1,
+      "selected_line_end": 9,
+      "selected_line_count": 9,
+      "material_line_start": 2962,
+      "material_line_end": 2972
+    },
+    {
+      "path": "frontend/src/app/(auth)/login/page.tsx",
+      "source_line_count": 88,
+      "selected_line_start": 1,
+      "selected_line_end": 88,
+      "selected_line_count": 88,
+      "material_line_start": 2973,
+      "material_line_end": 3062
+    },
+    {
+      "path": "frontend/src/app/(auth)/register/page.tsx",
+      "source_line_count": 99,
+      "selected_line_start": 1,
+      "selected_line_end": 99,
+      "selected_line_count": 99,
+      "material_line_start": 3063,
+      "material_line_end": 3163
+    },
+    {
+      "path": "frontend/src/app/asset-hub/page.tsx",
+      "source_line_count": 32,
+      "selected_line_start": 1,
+      "selected_line_end": 32,
+      "selected_line_count": 32,
+      "material_line_start": 3164,
+      "material_line_end": 3197
+    },
+    {
+      "path": "frontend/src/app/billing/page.tsx",
+      "source_line_count": 8,
+      "selected_line_start": 1,
+      "selected_line_end": 8,
+      "selected_line_count": 8,
+      "material_line_start": 3198,
+      "material_line_end": 3207
+    },
+    {
+      "path": "frontend/src/app/projects/[id]/page.tsx",
+      "source_line_count": 99,
+      "selected_line_start": 1,
+      "selected_line_end": 99,
+      "selected_line_count": 99,
+      "material_line_start": 3208,
+      "material_line_end": 3308
+    },
+    {
+      "path": "frontend/src/app/projects/[id]/settings/page.tsx",
+      "source_line_count": 8,
+      "selected_line_start": 1,
+      "selected_line_end": 8,
+      "selected_line_count": 8,
+      "material_line_start": 3309,
+      "material_line_end": 3318
+    },
+    {
+      "path": "frontend/src/app/projects/page.tsx",
+      "source_line_count": 164,
+      "selected_line_start": 1,
+      "selected_line_end": 164,
+      "selected_line_count": 164,
+      "material_line_start": 3319,
+      "material_line_end": 3484
+    },
+    {
+      "path": "frontend/src/app/providers.tsx",
+      "source_line_count": 22,
+      "selected_line_start": 1,
+      "selected_line_end": 22,
+      "selected_line_count": 22,
+      "material_line_start": 3485,
+      "material_line_end": 3508
+    },
+    {
+      "path": "frontend/src/app/settings/page.tsx",
+      "source_line_count": 8,
+      "selected_line_start": 1,
+      "selected_line_end": 8,
+      "selected_line_count": 8,
+      "material_line_start": 3509,
+      "material_line_end": 3518
+    },
+    {
+      "path": "frontend/src/stores/conversation.ts",
+      "source_line_count": 19,
+      "selected_line_start": 1,
+      "selected_line_end": 19,
+      "selected_line_count": 19,
+      "material_line_start": 3519,
+      "material_line_end": 3539
+    },
+    {
+      "path": "frontend/src/stores/user.ts",
+      "source_line_count": 33,
+      "selected_line_start": 1,
+      "selected_line_end": 33,
+      "selected_line_count": 33,
+      "material_line_start": 3540,
+      "material_line_end": 3574
+    },
+    {
+      "path": "frontend/src/components/agent/AgentStatusBar.tsx",
+      "source_line_count": 36,
+      "selected_line_start": 1,
+      "selected_line_end": 36,
+      "selected_line_count": 36,
+      "material_line_start": 3575,
+      "material_line_end": 3612
+    },
+    {
+      "path": "frontend/src/components/agent/ChatInput.tsx",
+      "source_line_count": 42,
+      "selected_line_start": 1,
+      "selected_line_end": 42,
+      "selected_line_count": 42,
+      "material_line_start": 3613,
+      "material_line_end": 3656
+    },
+    {
+      "path": "frontend/src/components/agent/ChatPanel.tsx",
+      "source_line_count": 61,
+      "selected_line_start": 1,
+      "selected_line_end": 61,
+      "selected_line_count": 61,
+      "material_line_start": 3657,
+      "material_line_end": 3719
+    },
+    {
+      "path": "frontend/src/components/agent/MessageBubble.tsx",
+      "source_line_count": 71,
+      "selected_line_start": 1,
+      "selected_line_end": 71,
+      "selected_line_count": 71,
+      "material_line_start": 3720,
+      "material_line_end": 3792
+    },
+    {
+      "path": "frontend/src/components/assets/AssetPanel.tsx",
+      "source_line_count": 26,
+      "selected_line_start": 1,
+      "selected_line_end": 26,
+      "selected_line_count": 26,
+      "material_line_start": 3793,
+      "material_line_end": 3820
+    },
+    {
+      "path": "frontend/src/components/ui/avatar.tsx",
+      "source_line_count": 109,
+      "selected_line_start": 1,
+      "selected_line_end": 109,
+      "selected_line_count": 109,
+      "material_line_start": 3821,
+      "material_line_end": 3931
+    },
+    {
+      "path": "frontend/src/components/ui/button.tsx",
+      "source_line_count": 64,
+      "selected_line_start": 1,
+      "selected_line_end": 64,
+      "selected_line_count": 64,
+      "material_line_start": 3932,
+      "material_line_end": 3997
+    },
+    {
+      "path": "frontend/src/components/ui/card.tsx",
+      "source_line_count": 92,
+      "selected_line_start": 1,
+      "selected_line_end": 92,
+      "selected_line_count": 92,
+      "material_line_start": 3998,
+      "material_line_end": 4091
+    },
+    {
+      "path": "frontend/src/components/ui/input.tsx",
+      "source_line_count": 21,
+      "selected_line_start": 1,
+      "selected_line_end": 21,
+      "selected_line_count": 21,
+      "material_line_start": 4092,
+      "material_line_end": 4114
+    },
+    {
+      "path": "frontend/src/components/ui/label.tsx",
+      "source_line_count": 24,
+      "selected_line_start": 1,
+      "selected_line_end": 24,
+      "selected_line_count": 24,
+      "material_line_start": 4115,
+      "material_line_end": 4140
+    },
+    {
+      "path": "frontend/src/components/ui/scroll-area.tsx",
+      "source_line_count": 58,
+      "selected_line_start": 1,
+      "selected_line_end": 58,
+      "selected_line_count": 58,
+      "material_line_start": 4141,
+      "material_line_end": 4200
+    },
+    {
+      "path": "frontend/src/components/ui/textarea.tsx",
+      "source_line_count": 18,
+      "selected_line_start": 1,
+      "selected_line_end": 18,
+      "selected_line_count": 18,
+      "material_line_start": 4201,
+      "material_line_end": 4220
+    },
+    {
+      "path": "frontend/src/hooks/useAgentStream.ts",
+      "source_line_count": 216,
+      "selected_line_start": 1,
+      "selected_line_end": 216,
+      "selected_line_count": 216,
+      "material_line_start": 4221,
+      "material_line_end": 4438
+    },
+    {
+      "path": "frontend/src/hooks/useCandidateSystem.ts",
+      "source_line_count": 85,
+      "selected_line_start": 1,
+      "selected_line_end": 85,
+      "selected_line_count": 85,
+      "material_line_start": 4439,
+      "material_line_end": 4525
+    },
+    {
+      "path": "frontend/src/lib/api.ts",
+      "source_line_count": 29,
+      "selected_line_start": 1,
+      "selected_line_end": 29,
+      "selected_line_count": 29,
+      "material_line_start": 4526,
+      "material_line_end": 4556
+    },
+    {
+      "path": "frontend/src/lib/utils.ts",
+      "source_line_count": 6,
+      "selected_line_start": 1,
+      "selected_line_end": 6,
+      "selected_line_count": 6,
+      "material_line_start": 4557,
+      "material_line_end": 4564
+    },
+    {
+      "path": "frontend/next.config.ts",
+      "source_line_count": 15,
+      "selected_line_start": 1,
+      "selected_line_end": 15,
+      "selected_line_count": 15,
+      "material_line_start": 4565,
+      "material_line_end": 4581
+    },
+    {
+      "path": "frontend/src/app/globals.css",
+      "source_line_count": 128,
+      "selected_line_start": 1,
+      "selected_line_end": 128,
+      "selected_line_count": 128,
+      "material_line_start": 4582,
+      "material_line_end": 4711
+    },
+    {
+      "path": "backend/pyproject.toml",
+      "source_line_count": 74,
+      "selected_line_start": 1,
+      "selected_line_end": 74,
+      "selected_line_count": 74,
+      "material_line_start": 4712,
+      "material_line_end": 4787
+    },
+    {
+      "path": "docker-compose.dev.yml",
+      "source_line_count": 19,
+      "selected_line_start": 1,
+      "selected_line_end": 19,
+      "selected_line_count": 19,
+      "material_line_start": 4788,
+      "material_line_end": 4808
+    },
+    {
+      "path": "docker-compose.yml",
+      "source_line_count": 124,
+      "selected_line_start": 1,
+      "selected_line_end": 124,
+      "selected_line_count": 124,
+      "material_line_start": 4809,
+      "material_line_end": 4934
+    },
+    {
+      "path": "backend/celery_app.py",
+      "source_line_count": 29,
+      "selected_line_start": 1,
+      "selected_line_end": 29,
+      "selected_line_count": 29,
+      "material_line_start": 4935,
+      "material_line_end": 4965
+    },
+    {
+      "path": "frontend/package.json",
+      "source_line_count": 45,
+      "selected_line_start": 1,
+      "selected_line_end": 45,
+      "selected_line_count": 45,
+      "material_line_start": 4966,
+      "material_line_end": 5012
+    },
+    {
+      "path": "frontend/tsconfig.json",
+      "source_line_count": 23,
+      "selected_line_start": 1,
+      "selected_line_end": 23,
+      "selected_line_count": 23,
+      "material_line_start": 5013,
+      "material_line_end": 5037
+    }
+  ],
+  "safe_software_filename": "StudioAgent AI视频制片平台软件"
+}

@@ -1,0 +1,13 @@
+{
+  "name": "software-copyright-materials",
+  "description": "从真实项目生成中国软件著作权申请资料（Word/TXT）。支持项目分析、代码材料抽取、申请表信息生成和操作手册撰写，输出符合软著申报要求的正式材料。",
+  "version": "2.2.0",
+  "author": {
+    "name": "Fokkyp",
+    "url": "https://github.com/Fokkyp"
+  },
+  "homepage": "https://github.com/Fokkyp/SoftwareCopyright-Skill",
+  "repository": "https://github.com/Fokkyp/SoftwareCopyright-Skill",
+  "license": "MIT",
+  "keywords": ["software-copyright", "chinese-copyright", "docx", "软著", "著作权"]
+}

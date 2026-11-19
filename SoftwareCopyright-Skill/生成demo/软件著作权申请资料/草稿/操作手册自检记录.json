@@ -1,0 +1,50 @@
+{
+  "rounds": [
+    {
+      "round": 1,
+      "action": "初稿生成",
+      "issues": [
+        "模块内容偏薄",
+        "操作步骤重复较多"
+      ]
+    },
+    {
+      "round": 2,
+      "action": "按项目真实流程扩写",
+      "issues": [
+        "部分步骤表达重复",
+        "部分段落缺少真实页面细节"
+      ]
+    },
+    {
+      "round": 3,
+      "action": "去除制式表达和 AI 味",
+      "issues": [
+        "部分句式仍偏模板化"
+      ]
+    },
+    {
+      "round": 4,
+      "action": "人工重写核心模块",
+      "issues": []
+    },
+    {
+      "round": 5,
+      "action": "技术化表达复核",
+      "issues": []
+    },
+    {
+      "round": 6,
+      "action": "截图预留复核",
+      "issues": []
+    },
+    {
+      "round": 7,
+      "action": "最终检查",
+      "issues": []
+    }
+  ],
+  "module_count": 8,
+  "final_issue_count": 0,
+  "screenshot_placeholders_visible": true
+}

@@ -1,0 +1,165 @@
+{
+  "software_name": "StudioAgent",
+  "product_positioning": "StudioAgent 是面向视频内容创作场景的多智能体 AI 制片平台。用户通过自然语言描述创意、故事或制作目标，系统以 Producer 为中枢协调编剧、导演、摄影、剪辑和音效等专业 Agent，辅助完成从创意沟通、方案规划、剧本分解、分镜设计到图像、视频、音频素材生产的制片流程。",
+  "industry": "数字内容创作 / AI 视频制作 / 智能媒体生产",
+  "target_users": [
+    "小说作者、IP 作者等希望把文字内容视觉化的创作者",
+    "短视频创作者、MCN 或自媒体团队",
+    "影视从业者、动画预览和概念片制作人员",
+    "企业市场部、品牌宣传和活动视频制作人员",
+    "需要统一管理角色、场景、分镜、视频和音频资产的内容团队"
+  ],
+  "core_value": "StudioAgent 将原本分散在文案、分镜、图像、视频和音频工具中的制作步骤整合到一个对话式工作区中，由多 Agent 按项目状态协作推进，并在关键节点保留用户确认、候选选择和撤回能力，降低非专业用户完成视频创意制作的组织成本。",
+  "business_features": [
+    "用户账号注册与登录",
+    "项目创建与项目列表管理",
+    "对话式 AI 制片工作区",
+    "多 Agent 协作状态展示",
+    "项目资产分类查看",
+    "候选素材选择与撤回",
+    "全局素材库管理",
+    "项目成本与计费信息展示"
+  ],
+  "business_feature_details": {
+    "用户账号注册与登录": "系统提供注册、登录和当前用户信息获取入口。用户填写邮箱、密码和昵称后可创建账号，登录后系统保存访问令牌，并把用户带入项目列表页面，后续项目、对话和素材操作均以用户身份为基础。",
+    "项目创建与项目列表管理": "用户进入“我的项目”页面后可以查看已有项目，并通过“新建项目”填写项目名称和描述。项目创建成功后进入对应工作区，项目列表以卡片方式展示标题、描述、风格和创建日期，便于用户区分不同视频制作任务。",
+    "对话式 AI 制片工作区": "项目工作区采用左侧对话、右侧资产的双面板结构。用户在对话框中输入想制作的视频内容或修改意见，系统通过流式事件返回 Agent 回复、工具调用和任务结果，让用户在同一界面持续推进创作。",
+    "多 Agent 协作状态展示": "系统围绕 Producer、Screenwriter、Director、Camera、Editor 和 Sound 六类角色组织制作任务。前端通过 Agent 状态栏展示当前工作中的 Agent 和交接状态，后端以 LangGraph Swarm、会话状态和 handoff 机制支撑不同 Agent 之间的协作。",
+    "项目资产分类查看": "工作区右侧资产面板按角色、场景、分镜、视频和音频分组展示项目产物。随着创作过程推进，角色设定、场景素材、分镜画面、视频片段和音频内容可以沉淀到项目资产区，用户可在制作过程中查看和管理。",
+    "候选素材选择与撤回": "项目包含候选抽卡状态管理和后端候选接口设计。图片、场景、分镜等媒体生成结果可以提供多张候选，用户选择满意项后确认持久化，也可以取消候选或撤回到上一版本，便于对视觉结果进行比较和修正。",
+    "全局素材库管理": "系统提供全局素材库页面和接口骨架，用于管理文件夹、全局角色、场景和音色。用户可在素材库中创建、筛选和复用常用资产，并将全局资产深拷贝到具体项目中，减少重复制作。",
+    "项目成本与计费信息展示": "工作区底部显示余额、本项目消耗和当前模型，计费页面保留余额与交易记录入口。该功能用于让用户了解 AI 生成过程中的费用状态，并为后续按模型、任务和素材生成量统计成本提供界面基础。"
+  },
+  "operation_flow": [
+    "用户从首页进入系统，选择注册或登录，完成身份认证后进入项目列表。",
+    "用户在“我的项目”页面查看已有项目，或填写项目名称和描述创建新的视频制作项目。",
+    "系统打开项目工作区，左侧显示 AI 剧组对话面板，右侧显示项目资产面板，底部展示余额、项目消耗和当前模型。",
+    "用户在对话输入框描述创意、故事文本、广告目标或局部修改要求，Producer 根据项目状态规划下一步制作动作。",
+    "系统以流式消息展示 Agent 回复、工具调用和 Agent 间交接状态，用户可观察当前由哪个 Agent 处理任务。",
+    "制作过程中形成的角色、场景、分镜、视频和音频内容进入项目资产面板，用户按分类查看产物。",
+    "当系统生成多个候选素材时，用户选择满意候选并确认，也可以取消候选或撤回到上一版本。",
+    "用户可进入全局素材库管理常用角色、场景和音色，并在项目中复用已有资产。",
+    "用户通过计费页面或工作区底部查看余额和项目消耗，根据成本情况继续生成、调整或暂停制作。"
+  ],
+  "application_purpose": "本软件用于辅助视频内容创作者以自然语言方式组织 AI 视频制作流程，把创意描述、剧本分析、分镜规划、视觉素材生成、视频片段生成、配音和音效设计等环节纳入统一项目工作区，帮助用户管理制作过程、素材资产和成本信息。",
+  "main_functions": "软件主要包括用户注册登录、项目创建和管理、对话式 AI 制片、六类 Agent 协作状态展示、项目资产分类查看、候选素材选择与撤回、全局素材库管理、计费与成本信息展示等功能。",
+  "technical_characteristics": "软件采用前后端分离的 Web 应用架构，前端基于 Next.js、React、TypeScript 和 Tailwind CSS 构建项目列表、对话工作区和资产面板；后端基于 FastAPI、SQLAlchemy、LangGraph Swarm 和 Celery 组织 REST 接口、SSE 流式对话、多 Agent 编排、异步生成任务和数据库持久化；系统预留 PostgreSQL、Redis、多模型 LLM、图像、视频和语音生成服务接入能力，并通过候选状态、项目资产和全局素材库支持内容生产结果的管理。",
+  "software_technical_option": "应用软件",
+  "software_category": "应用软件",
+  "manual_sections": [
+    {
+      "title": "软件概述",
+      "intent": "说明 StudioAgent 的用途、面向对象和整体制片流程，让审核员先理解软件解决的视频创作问题。",
+      "paragraphs": [
+        "介绍 StudioAgent 是多智能体 AI 视频制片平台，用户通过自然语言发起制作需求。",
+        "说明系统围绕项目、对话、Agent 协作和素材资产组织视频制作过程。"
+      ],
+      "include_feature_overview": false,
+      "include_operation_modules": false,
+      "include_operation_flow": false
+    },
+    {
+      "title": "运行环境与进入方式",
+      "intent": "说明软件作为 Web 系统的访问方式、账号使用方式和基础运行要求。",
+      "paragraphs": [
+        "说明用户通过浏览器访问系统首页，选择登录或注册进入。",
+        "说明项目运行依赖前端页面、后端接口、数据库和缓存服务。"
+      ],
+      "include_feature_overview": false,
+      "include_operation_modules": false,
+      "include_operation_flow": false
+    },
+    {
+      "title": "账号注册和登录",
+      "intent": "覆盖当前代码中的注册、登录和用户身份获取流程。",
+      "paragraphs": [
+        "说明用户填写邮箱、密码和昵称完成注册。",
+        "说明用户登录后系统保存登录状态，并跳转到项目列表。"
+      ],
+      "include_feature_overview": false,
+      "include_operation_modules": true,
+      "include_operation_flow": false
+    },
+    {
+      "title": "项目管理",
+      "intent": "覆盖项目列表、新建项目、进入项目工作区等核心入口。",
+      "paragraphs": [
+        "说明用户在项目列表查看已有项目。",
+        "说明用户填写项目名称和描述创建新项目，并进入该项目的创作工作区。"
+      ],
+      "include_feature_overview": false,
+      "include_operation_modules": true,
+      "include_operation_flow": false
+    },
+    {
+      "title": "AI 制片工作区",
+      "intent": "重点说明左侧对话、右侧资产和底部状态栏组成的核心业务页面。",
+      "paragraphs": [
+        "说明用户在对话框中描述视频创意或修改需求。",
+        "说明系统以流式消息返回 Producer 和其他 Agent 的处理过程，并在状态栏展示当前 Agent 状态。"
+      ],
+      "include_feature_overview": true,
+      "include_operation_modules": true,
+      "include_operation_flow": false
+    },
+    {
+      "title": "项目资产和候选素材处理",
+      "intent": "说明角色、场景、分镜、视频、音频等资产分类，以及候选选择、确认、取消和撤回的操作结果。",
+      "paragraphs": [
+        "说明项目资产在右侧面板按类型展示。",
+        "说明生成多项候选素材时，用户可以选择、确认、取消或撤回。"
+      ],
+      "include_feature_overview": false,
+      "include_operation_modules": true,
+      "include_operation_flow": false
+    },
+    {
+      "title": "全局素材库",
+      "intent": "说明全局角色、场景、音色和文件夹管理入口，以及素材复用到项目的用途。",
+      "paragraphs": [
+        "说明用户进入素材库页面查看和筛选不同类型素材。",
+        "说明全局素材可作为项目制作时的复用资源。"
+      ],
+      "include_feature_overview": false,
+      "include_operation_modules": true,
+      "include_operation_flow": false
+    },
+    {
+      "title": "计费与成本查看",
+      "intent": "说明工作区底部和计费页面展示余额、项目消耗和模型信息的用途。",
+      "paragraphs": [
+        "说明用户可在工作区查看余额、本项目消耗和当前模型。",
+        "说明计费页面用于后续查看余额和交易记录。"
+      ],
+      "include_feature_overview": false,
+      "include_operation_modules": true,
+      "include_operation_flow": false
+    },
+    {
+      "title": "典型使用流程",
+      "intent": "把注册登录、创建项目、对话制作、查看资产、选择候选和查看成本串成审核员能理解的完整流程。",
+      "paragraphs": [
+        "按真实页面顺序描述从进入系统到完成一次视频制作任务的主要步骤。",
+        "说明用户在每一步能看到的页面反馈和结果。"
+      ],
+      "include_feature_overview": false,
+      "include_operation_modules": false,
+      "include_operation_flow": true
+    },
+    {
+      "title": "使用注意事项",
+      "intent": "说明账号、项目素材、模型服务、费用和网络环境等使用注意点。",
+      "paragraphs": [
+        "说明用户需要保持账号登录状态，妥善管理项目素材。",
+        "说明生成任务依赖外部模型服务和运行环境，费用和耗时会随任务类型变化。"
+      ],
+      "include_feature_overview": false,
+      "include_operation_modules": false,
+      "include_operation_flow": false
+    }
+  ],
+  "model_review_notes": [
+    "业务功能来自 README、PRD、前端页面、前端 hooks、后端 API 和架构文档；当前代码存在部分骨架/TODO，实现程度应在后续申请表和手册中用项目现有页面和接口证据支撑。",
+    "操作手册应以普通用户看到的页面和操作结果为中心，避免写成框架、接口或 Agent 实现说明。"
+  ]
+}

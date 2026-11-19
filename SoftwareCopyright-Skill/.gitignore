@@ -1,0 +1,54 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Python
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+.Python
+.venv/
+venv/
+env/
+
+# .NET build outputs
+bin/
+obj/
+**/bin/
+**/obj/
+
+# Local generated materials
+软件著作权申请资料/
+**/软件著作权申请资料/
+
+# Temporary and preview outputs
+*.tmp
+*.temp
+*.log
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.webp
+!docs/
+!docs/screenshots/
+!docs/screenshots/*.png
+
+# Office lock files
+~$*.docx
+~$*.xlsx
+~$*.pptx
+
+# Editor / IDE
+.idea/
+.vscode/
+
+# Environment
+.env
+.env.*
+
+# Keep the generated demo in this repository
+!生成demo/
+!生成demo/**
+生成demo/**/.DS_Store

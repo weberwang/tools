@@ -1,0 +1,146 @@
+{
+  "project_root": "/Users/xxx/Documents/code/Software Copyright/StudioAgent",
+  "project_name": "StudioAgent",
+  "software_name_candidate": "studio agent frontend",
+  "package": {
+    "name": "studio-agent-frontend",
+    "path": "frontend/package.json",
+    "version": "0.1.0",
+    "scripts": {
+      "dev": "next dev --turbopack",
+      "build": "next build",
+      "start": "next start",
+      "lint": "next lint"
+    },
+    "dependency_names": [
+      "@eslint/eslintrc",
+      "@radix-ui/react-avatar",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-scroll-area",
+      "@radix-ui/react-slot",
+      "@radix-ui/react-tabs",
+      "@radix-ui/react-tooltip",
+      "@tailwindcss/postcss",
+      "@tanstack/react-query",
+      "@types/node",
+      "@types/react",
+      "@types/react-dom",
+      "class-variance-authority",
+      "clsx",
+      "eslint",
+      "eslint-config-next",
+      "framer-motion",
+      "lucide-react",
+      "next",
+      "postcss",
+      "radix-ui",
+      "react",
+      "react-dom",
+      "shadcn",
+      "tailwind-merge",
+      "tailwindcss",
+      "tw-animate-css",
+      "typescript",
+      "zustand"
+    ]
+  },
+  "frameworks": [
+    "Next.js",
+    "React"
+  ],
+  "language": "React、TypeScript、JavaScript",
+  "source": {
+    "file_count": 33,
+    "line_count": 1738,
+    "extension_counts": {
+      ".css": 1,
+      ".js": 1,
+      ".ts": 8,
+      ".tsx": 23
+    },
+    "category_counts": {
+      "component": 12,
+      "entry": 2,
+      "page": 9,
+      "source": 3,
+      "state": 2,
+      "style": 1,
+      "utility": 4
+    },
+    "categorized_files": {
+      "entry": [
+        "frontend/src/app/layout.tsx",
+        "frontend/src/app/page.tsx"
+      ],
+      "page": [
+        "frontend/src/app/providers.tsx",
+        "frontend/src/app/settings/page.tsx",
+        "frontend/src/app/projects/page.tsx",
+        "frontend/src/app/projects/[id]/page.tsx",
+        "frontend/src/app/projects/[id]/settings/page.tsx",
+        "frontend/src/app/asset-hub/page.tsx",
+        "frontend/src/app/(auth)/register/page.tsx",
+        "frontend/src/app/(auth)/login/page.tsx",
+        "frontend/src/app/billing/page.tsx"
+      ],
+      "component": [
+        "frontend/src/components/ui/card.tsx",
+        "frontend/src/components/ui/scroll-area.tsx",
+        "frontend/src/components/ui/label.tsx",
+        "frontend/src/components/ui/avatar.tsx",
+        "frontend/src/components/ui/button.tsx",
+        "frontend/src/components/ui/textarea.tsx",
+        "frontend/src/components/ui/input.tsx",
+        "frontend/src/components/agent/AgentStatusBar.tsx",
+        "frontend/src/components/agent/MessageBubble.tsx",
+        "frontend/src/components/agent/ChatPanel.tsx",
+        "frontend/src/components/agent/ChatInput.tsx",
+        "frontend/src/components/assets/AssetPanel.tsx"
+      ],
+      "state": [
+        "frontend/src/stores/conversation.ts",
+        "frontend/src/stores/user.ts"
+      ],
+      "utility": [
+        "frontend/src/hooks/useCandidateSystem.ts",
+        "frontend/src/hooks/useAgentStream.ts",
+        "frontend/src/lib/utils.ts",
+        "frontend/src/lib/api.ts"
+      ],
+      "style": [
+        "frontend/src/app/globals.css"
+      ],
+      "source": [
+        "frontend/next-env.d.ts",
+        "frontend/postcss.config.js",
+        "frontend/next.config.ts"
+      ]
+    }
+  },
+  "routes": [
+    "/",
+    "/login",
+    "/projects",
+    "/register"
+  ],
+  "readme_excerpt": "# StudioAgent\nå¤æºè½ä½ AI è§é¢å¶çå¹³å°ãç¨æ·ç¨èªç¶è¯­è¨æè¿°åææ³æ³ï¼6 ä¸ªä¸ä¸ AI Agent åä½å®æå§æ¬ãåéãå¾åãè§é¢åé³é¢ççäº§ââå\n¨ç¨æ¯æäººæºååæ§å¶ã\n## æ¶æ\n```\nåç«¯ (Next.js 15)  âSSE/RESTâ  åç«¯ (FastAPI + LangGraph)  âCeleryâ  å¼æ­¥ Workers\n```\n**6 ä¸ª AI Agent**ï¼éè¿ LangGraph Swarm æå»ºæå½¢ææï¼\n| Agent | èè´£ |\n|-------|------|\n| **Producerï¼å¶çäººï¼** | ä¸­æ¢èç¹ââè§åãåè°ãèªä¸»å³ç­ä¸ä¸æ­¥è¡å¨ |\n| **Screenwriterï¼ç¼å§ï¼** | æ\näºåæãè§è²æåãåéå§æ¬çæ |\n| **Directorï¼å¯¼æ¼ï¼** | åéè®¾è®¡ãéå¤´ç¼æãè§è§è¿ç»­æ§ææ§ |\n| **Cameraï¼æå½±å¸ï¼** | å¾åçæï¼è§è²ãåºæ¯ãåéç»é¢ï¼ |\n| **Editorï¼åªè¾å¸ï¼** | è§é¢ç»è£\nãè½¬åºãæ¶é´çº¿ç¼è¾ |\n| **Soundï¼é³æå¸ï¼** | å¯¹ç½ãè¯­é³åæãé³æãèæ¯é³ä¹ |\nProducer æ¯å¯ä¸çä¸­æ¢ââææå\n¶ä» Agent å®æä»»å¡ååªè½äº¤å Producerã\n## ææ¯æ \n| å±çº§ | ææ¯ |\n|------|------|\n| **åç«¯** | Next.js 15ãReact 19ãTailwind CSS 4ãZustandãTanStack QueryãFramer Motion |\n| **åç«¯** | Python 3.12ãFastAPIãLangGraph SwarmãSQLAlchemy 2.0ãCelery |\n| **æ°æ®åº** | PostgreSQL 16ãRedis |\n| **LLM** | OpenRouter (Claude)ãGoogle (Gemini)ãVolcEngine (è±å\n) |\n| **å¾åçæ** | SeedreamãImagenãFLUX |\n| **è§é¢çæ** | SeedanceãVeoãKling |\n| **è¯­é³çæ** | Qwen TTSãElevenLabs |\n## å¿«éå¼å§\n### åç½®è¦æ±\n- Python 3.12+\n- Node.js 20+\n- Docker & Docker Compose\n### å®è£\nå¯å¨\n```bash\n# å\néé¡¹ç®\ngit clone https://github.com/your-org/StudioAgent.git\ncd StudioAgent\n# å¤å¶ç¯å¢åéæä»¶å¹¶å¡«å\n¥ä½ çå¯é¥\ncp .env.example .env",
+  "run_command_candidates": [
+    "npm run dev",
+    "npm run start"
+  ],
+  "feature_candidates": [
+    "login",
+    "projects",
+    "register",
+    "settings",
+    "projects settings",
+    "asset hub",
+    "billing",
+    "AgentStatusBar",
+    "MessageBubble",
+    "ChatPanel",
+    "ChatInput",
+    "AssetPanel"
+  ]
+}
